@@ -1,0 +1,31 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library Sign  // Manipulating signed data
+
+// FIXME: (upstream) remove "256 u>B"
+{ over hash 256 u>B swap  // (cell hash sk)
+  ed25519_sign  // (cell signature)
+  <b swap B, swap ref, b>  // (signed)
+} : mkSigned  // (cell sk - signed)
+// Hash `cell` and sign the hash with secret key `sk`.
+// The result is a cell containing the signature as its data bytes and
+// the original cell in its first reference.
+
+{ <s ref@
+} : getSignedData  // (signed - cell)
+// Return the data that was signed.
+// WARNING: Does not actually check the signature!
+
+// FIXME: (upstream) remove "256 u>B"
+// FIXME: (upstream) remove "swap" after "ref@+"
+{ over <s 64 B@+ ref@+ swap s>  // (signed pk signature cell)
+  hash 256 u>B  // (signed pk signature hash)
+  swap rot  // (signed hash signature pk)
+  ed25519_chksign  // (signed bool)
+  not abort"Invalid signature"
+  getSignedData
+} : checkSigned  // (signed pk - cell)
+// Check the signature and extract the signed data.
+// Throws if the signature is incorrect.
