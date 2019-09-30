@@ -126,6 +126,7 @@ data GlobalState = MkGlobalState
   , shares :: (UInt120, UInt120)
   , timeout :: UInt32
   , fineAmount :: Int120
+  , nonce :: UInt64  -- ^ Set to deployment time-stamp to change the hash
   }
 
 data LocalState
