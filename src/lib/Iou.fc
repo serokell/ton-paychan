@@ -1,0 +1,14 @@
+
+;; (channel, amount, iou, uome) 
+(slice, int, int, int) parseIou(cell in_msg, int pk) {
+  var payload = checkSigned(in_msg, pk);
+
+  var ps = payload.begin_parse();
+
+  var s_channel = ps~load_msg_addr();
+  var amount = ps~load_uint(120);
+  var iou = ps~load_uint(248);
+  var uome = ps~load_uint(248);
+
+  return (s_channel, amount, iou, uome);
+}

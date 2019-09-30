@@ -1,4 +1,26 @@
-// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
-//
-// SPDX-License-Identifier: MPL-2.0
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
+
+() recv_external (slice in_msg) impure {
+  ;; do nothing
+}
+
+;; slice is input in ton/crypto/smartcont/wallet-code.fc
+() recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
+  var pk = 0; ;; change this
+  var (addr, amount, iou, uome) = parseIou(in_msg_cell, pk);
+
+  var ans_tag = 1;
+  var query_id = 2;
+  var mode = 3;
+
+;; some side effect needed for this method not to be eliminated by compiler
+  return send_raw_message(
+    begin_cell()
+    .store_slice(addr)
+    .end_cell()
+  , 1);
+}
 
