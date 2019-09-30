@@ -1,0 +1,26 @@
+"Test.fif" include
+"Asm.fif" include
+
+@tests Sign.fif <-> FunC interop
+
+// First compile assembler to avoid name conflicts
+
+"signInterop.asm.gen" include constant contract
+
+//
+
+"Sign.fif" include
+
+{ <b 7565931 64 i, b>
+  newkeypair -rot
+  mkSigned
+  swap  // (signed pk)
+  256 B>u@
+
+  contract <s
+  runvmdict 0= not abort"TVM died"
+
+  <s 64 i@+ s>
+  7565931 = not abort"Not equal"
+
+} @test signFiftVerifyTvm

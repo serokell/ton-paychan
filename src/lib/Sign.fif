@@ -24,8 +24,15 @@ library Sign  // Manipulating signed data
   hash 256 u>B  // (signed pk signature hash)
   swap rot  // (signed hash signature pk)
   ed25519_chksign  // (signed bool)
-  not abort"Invalid signature"
-  getSignedData
+  dup
+  { swap getSignedData swap } if
+} : checkSignedQ  // (signed pk - cell true | false)
+// Check the signature and extract the signed data.
+// Returns data followed by `true` if the signature was correct,
+// `false` otherwise.
+
+{ checkSignedQ
+  not abort"Incorrect signature"
 } : checkSigned  // (signed pk - cell)
 // Check the signature and extract the signed data.
 // Throws if the signature is incorrect.

@@ -1,0 +1,5 @@
+;;
+
+cell main(cell signed, int pk) {
+  return checkSigned(signed, pk);
+}

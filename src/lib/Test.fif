@@ -1,0 +1,19 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library Test  // Fift testing framework
+
+{ "Tests for " type
+  0 word type
+  ":" type cr
+  0 'nop
+} :: @tests
+
+{ "  - " type
+  bl word type
+  "..." type
+  execute
+  " ok" type cr
+  0 'nop
+} :: @test

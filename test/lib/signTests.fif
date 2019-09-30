@@ -1,0 +1,21 @@
+"Test.fif" include
+"Sign.fif" include
+
+@tests Sign.fif
+
+{ <b 1234567 50 i, b>
+  newkeypair
+  -rot
+  mkSigned
+  swap
+  checkSigned
+  <s 50 i@+ s>
+  1234567 = not abort"Not equal"
+} @test signRoundtrip
+
+{ <b 1234566 50 i, b>
+  newkeypair drop
+  mkSigned
+  newkeypair swap drop
+  checkSignedQ abort"Did not return false"
+} @test signWrongKey
