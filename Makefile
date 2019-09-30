@@ -1,8 +1,12 @@
+# SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 #
 # Configure paths
 #
 
-ton_src = ../../ton
+ton_src = ../ton
 
 fift_lib = $(ton_src)/crypto/fift/lib
 
