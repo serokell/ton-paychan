@@ -1,7 +1,7 @@
 fift = fift -I $(fift_lib):src/lib
 
 .PHONY: test
-test: test/fift
+test: test/fift test/interop
 
 .PHONY:  test/fift
 test/fift:
