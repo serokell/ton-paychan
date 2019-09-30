@@ -19,7 +19,7 @@ in the process), inactivity timeout, and misbehaviour fine. Then the payment
 channel contract is preconfigured and deployed to the blockchain network
 (this can be done either by Alice, or bob, or someone else).
 
-The contract starts in the “initialising” state, which means that it is waiting
+The contract starts in the “waiting” state, which means that it is waiting
 for initial commitments from both parties. Alice and Bob each have to send
 to the contract the amount of tokens equal to their share, plus and extra
 amount that will be locked in order to be used as a fine payment in case of
@@ -73,6 +73,8 @@ and fine Bob.
 
 ## Off-chain protocol
 
+### Message format
+
 The following `Iou` data type specified the wire-format of the IOU message:
 
 ```haskell
@@ -105,4 +107,165 @@ No other replay protection is necessary, since the iou and uome fields are
 non-decreasing and thus naturally play the role of never repeating sequence
 numbers.
 
+### Message processing
 
+TODO
+
+## Contract logic
+
+The contract’s state is described by the following data type:
+
+```haskell
+data PayChanState = MkPayChanState
+  { globalState :: GlobalState
+  , localState :: LocalState
+  }
+
+data GlobalState = MkGlobalState
+  { parties :: (PublicKey, PublicKey)
+  , shares :: (UInt120, UInt120)
+  , timeout :: UInt32
+  , fineAmount :: Int120
+  }
+
+data LocalState
+  = MkStateWaitingBoth  -- ^ Waiting for shares
+  | MkStateWaitingOne Address PublicKey  -- ^ Waiting for the second share
+  | MkStateOpen OpenState  -- ^ The channel is open and can be used
+  | MkStateClosing OpenState ClosingState  -- ^ One party requested the channel to close
+  | MkStateDispute OpenState DisputeState  -- ^ One of the party started a dispute
+
+data OpenState = MkOpenState (Address, Address)
+
+data ClosingState = MkClosingState
+  { requester :: PublicKey  -- ^ Who requested the channel closed
+  , request :: CloseRequest  -- ^ Details of the request provided
+  , timestamp :: Timestamp  -- ^ When the channel was requested to close
+  }
+
+data DisputeState = MkDisputeState
+  { starter :: PublicKey  -- ^ Who started the dispute
+  , request :: DisputeRequest  -- ^ Details of the request provided
+  , timestamp :: Timestamp  -- ^ When the dispute was started
+  }
+```
+
+Users can make the following requests:
+
+```haskell
+data Request
+  | MkRequestClose CloseRequest
+  | MkRequestCloseBad CloseBadRequest
+  | MkRequestDispute DisputeRequest
+  | MkRequestDisputeOk
+  | MkRequestDisputeBad DisputeBadRequest
+  | MkRequestCloseOk
+  | MkRequestTimeout
+
+data CloseRequest = MkCloseRequest
+  { payout :: UInt120  -- ^ Requested payout
+  , iou :: Maybe Iou  -- ^ Last IOU from the other party
+  }
+
+data CloseBadRequest = MkCloseBadRequest
+  { payout :: UInt120  -- ^ Requested payout
+  , iou :: Iou  -- ^ Mandatory IOU confirming the proposed payout
+  }
+
+data DisputeRequest = MkDisputeRequest
+  { closeRequest :: CloseRequest
+  , badIou :: Iou  -- ^ Invalid IOU from the other party
+  }
+
+data DisputeBadRequest = MkDisputeRequest
+  { goodIou :: Iou  -- ^ IOU from the other party that proves them wrong
+  , closeRequest :: CloseRequest
+  }
+```
+
+### Initialisation and waiting for the first share (`MkStateWaitingBoth`)
+
+The contract is initialised with its global state (which plays the role of
+configuration) and local state `MkStateWaitingBoth`. Transitions possible:
+
+* One party contributes their share -> `MkStateWaitingOne`. The new state
+  records the address that the funds arrived from (it will be used for the
+  payout in the end) and the identity of the other party we are waiting for.
+* The deployer of the contract requests it destroyed.
+
+### Waiting for the second share (`MkStateWaitingOne`)
+
+One of the parties has contributed their share and the contract waiting for
+the other one. Possible transitions:
+
+* The first party requests a refund (`MkCloseOk`) -> their share is returned
+  back to their address and the contract is destroyed.
+* The second party contributes their share -> `MkStateOpen`. The address
+  of the second party is recorded as well.
+
+### The channel is open (`MkStateOpen`)
+
+Now all transactions happen off-chain. The parties exchange their IOUs
+until they decide to close the channel or one of the parties requests
+arbitration. Possible transitions:
+
+* One party requests the channel closed (`MkRequestClose`) -> `MkStateClosing`.
+  (If the `payout` value is impossible, the request is rejected.)
+  The contract remembers the requester and the IOU they provided, if any, but
+  it is not verified yet. Current time-stamp is also recorded.
+* One party disputes an incorrect IOU from the other (`MkRequestDispute`) ->
+  `MkStateDispute`. Again, all details of the request, include the time-stamp,
+  are remembered.
+
+### The channel is closing (`MkStateClosing`)
+
+The contract is waiting for a confirmation from the other party. Transitions:
+
+* The other party agrees with the proposed distribution (`MkRequestCloseOk`).
+  The payouts are made and the contract is destroyed.
+* The other party does not agree with the proposed distribution
+  (`MkRequestCloseBad`). They must provide an IOU that:
+    * is signed by the party that requested the channel closed,
+    * happened-after the original IOU,
+    * shows that they owe to the requester less than originally requested,
+    * they are owed at least as much as their new requested payout.
+  If all the above are true, the payout is made according to the contender’s
+  request and the original requester is fined. Otherwise the payout is made
+  according to the original request and the contender is fined.
+* The other party disappears and the original requester forces the channel
+  to close (`MkRequestTimeout`). If the amount of time given by `timeout` has
+  passed, the payment is made according to the request and the other party
+  is fined. Otherwise the request is rejected. (TODO: charge for incorrect
+  requests.)
+
+### A dispute is happening (`MkStateDispute`)
+
+One of the parties reported incorrect behaviour of the other party. Only one
+time of incorrect behaviour can be detected: the second party sent to the
+first one an IOU that indicated that the first party transferred more than they
+ever agreed to. In order to contend, the second party has to present an IOU
+that shows that the first party indeed transferred to them that much.
+Transitions:
+
+* The second party agrees that the dispute is valid (`MkRequestCloseOk`).
+  The payout is made as requested and the offending party is fined.
+* The second party disagrees with the dispute (`MkRequestDisputeBad`).
+  They have to show any IOU signed by the first party that shows that they
+  transferred in total at least as much as shown in the allegedly bad IOU.
+  If they succeed in doing so, the payout is made according to their new
+  request and the first party is fined. Otherwise the payout is made according
+  to the original request and the second party is fined.
+* The second party does not respond to the dispute (`MkRequestTimeout`).
+  Same as with closing.
+
+
+## TODO
+
+* Figure out how to punish parties for incorrect requests
+
+
+## Further work
+
+* Make optimisations for uni-directional channels.
+* Allow parties to increase their shares as they go.
+* Penalise parties by skewing the distribution in the end.
