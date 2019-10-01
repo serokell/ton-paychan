@@ -10,7 +10,7 @@ ton_src = ../ton
 
 fift_lib = $(ton_src)/crypto/fift/lib
 func_lib = $(ton_src)/crypto/smartcont/stdlib.fc
-func_compiler = ./func
+func_compiler = func
 
 ##
 
