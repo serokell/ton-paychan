@@ -1,7 +1,6 @@
 
 ;; (channel, amount, iou, uome) 
-(slice, int, int, int) parseInboundMessage(slice in_msg, int pk) {
-;; as I unerstand pk would come from state.
+(slice, int, int, int) parseIou(cell in_msg, int pk) {
   var payload = checkSigned(in_msg, pk);
 
   var ps = payload.begin_parse();

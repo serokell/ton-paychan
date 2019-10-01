@@ -3,28 +3,24 @@
 ;; SPDX-License-Identifier: MPL-2.0
 
 
+() recv_external (slice in_msg) impure {
+  ;; do nothing
+}
 
 ;; slice is input in ton/crypto/smartcont/wallet-code.fc
-() recv_external(slice in_msg) impure {
+() recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
   var pk = 0; ;; change this
-  var (addr, amount, iou, uome) = parseInboundMessage(in_msg, pk);
+  var (addr, amount, iou, uome) = parseIou(in_msg_cell, pk);
 
   var ans_tag = 1;
   var query_id = 2;
   var mode = 3;
 
-  var msg =
-    begin_cell()
-      .store_uint(0x18, 6)
-      .store_slice(addr)
-      .store_grams(1)
-      .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-      .store_uint(ans_tag, 32)
-      .store_uint(query_id, 64);
-
 ;; some side effect needed for this method not to be eliminated by compiler
-  var res = send_raw_message(msg.end_cell(), mode);
-
-  return (); ;; send_raw_message(msg.end_cell(), mode);
+  return send_raw_message(
+    begin_cell()
+    .store_slice(addr)
+    .end_cell()
+  , 1);
 }
 

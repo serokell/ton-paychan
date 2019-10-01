@@ -6,8 +6,8 @@
  ;; @return the data that was signed.
  ;; @warning Does not actually check the signature!
  ;;;
-cell getSignedData(slice signed) {
-  return preload_ref(signed);
+cell getSignedData(cell signed) {
+  return preload_ref(begin_parse(signed));
 }
 
 ;;;
@@ -15,7 +15,8 @@ cell getSignedData(slice signed) {
  ;;
  ;; @throw if the signature is incorrect.
  ;;;
-cell checkSigned(slice signature, int pk) {
+cell checkSigned(cell signed, int pk) {
+  slice signature = begin_parse(signed);
   cell c = preload_ref(signature);
   throw_unless(1, check_signature(cell_hash(c), signature, pk));
   return c;
