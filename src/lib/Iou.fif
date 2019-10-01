@@ -1,0 +1,43 @@
+library Iou
+
+"Sign.fif" include
+"TonUtil.fif" include
+
+// (address, amount, iou, uome) -> cell
+{
+  <b
+  -rot addr,
+  // I dont really understand what really address is.
+  // `addr,` just serializes wc as int8 and in-chain addr as uint256 
+  swap 120 u,
+  swap 248 u,
+  swap 248 u,
+  b>
+} : serializeIou
+
+{
+  8 i@+
+  256 u@+
+} : addr@+
+
+// cell -> (address, amount, iou, uome)
+{
+  <s
+  addr@+ // addr
+  120 u@+ // amount
+  248 u@+ // iou
+  248 u@+ // uome
+  s>
+} : parseIou
+
+{
+  1 2 3 4 5
+  serializeIou
+  parseIou
+  // 4 5 3 2 1
+  1 = not abort"Not 1"
+  2 = not abort"Not 2"
+  3 = not abort"Not 3"
+  5 = not abort"Not 5"
+  4 = not abort"Not 4"
+} : iouRoundtrip
