@@ -1,0 +1,54 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
+;; Local state serialization/parsing
+;; First 32 bits of cell is constructorId
+
+;; MkStateWaitingBoth
+
+int StateTags::WaitingBoth() { return 1; }
+
+builder store_StateWaitingBoth() {
+  return begin_cell()
+    .store_int(32, StateTags::WaitingBoth());
+}
+
+(slice, ()) load_StateWaitingBoth(slice s) { return (s, ()); }
+
+;; MkStateWaitingOne
+
+int StateTags::WaitingOne() { return 2; }
+
+cell mkStateWaitingOne(slice addr, cell pk_cell) {
+  cell addr_cell =
+    begin_cell()
+      .store_slice(addr)
+      .end_cell();
+
+  return begin_cell()
+    .store_uint(32, StateTags::WaitingOne())
+    .store_ref(addr_cell)
+    .store_ref(pk_cell)
+    .end_cell();
+}
+
+;; addr, pk
+(cell, cell) parseStateWaitingOne(slice s) {
+  throw_if(33, s~load_uint(32) != StateTags::WaitingOne());
+  var addr = s~load_ref();
+  var pk = s~load_ref();
+  return (addr, pk);
+}
+
+;; MkStateOpen
+
+int StateTags::Open() { return 3; }
+
+cell mkStateOpen(cell addr1, cell addr2) {
+  return begin_cell()
+    .store_uint(32, StateTags::Open())
+    .store_ref(addr1)
+    .store_ref(addr2)
+    .end_cell();
+}

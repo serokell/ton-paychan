@@ -7,20 +7,94 @@
   ;; do nothing
 }
 
-;; slice is input in ton/crypto/smartcont/wallet-code.fc
-() recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
-  var pk = 0; ;; change this
-  var (addr, amount, iou, uome) = parseIou(in_msg_cell, pk);
-
-  var ans_tag = 1;
-  var query_id = 2;
-  var mode = 3;
-
-;; some side effect needed for this method not to be eliminated by compiler
-  return send_raw_message(
-    begin_cell()
-    .store_slice(addr)
-    .end_cell()
-  , 1);
+;; global, local
+(cell, cell) getState() impure {
+  var s = get_data().begin_parse();
+  return (s~load_ref(), s~load_ref());
 }
 
+() putState(cell global, cell local) impure {
+  var c = begin_cell()
+    .store_ref(global)
+    .store_ref(local)
+    .end_cell();
+}
+
+() process_simple_transfer(
+  slice s_addr,
+  int msg_value,
+  slice in_msg) impure {
+  cell msg_addr = begin_cell().store_slice(s_addr).end_cell();
+  var msg_pk = in_msg~load_ref();
+
+  var (globalCell, localCell) = getState();
+
+  var (pk1, pk2, share1, share2, _, _, _)
+    = parseGlobalState(globalCell);
+
+  var ls = localCell.begin_parse();
+  var (_, stateTag) = ls.load_uint(32);
+
+ 
+
+  if (stateTag == StateTags::WaitingBoth()) {
+    ;; WaitingBoth -> WaitingOne s_addr pk
+    if (cell_hash(msg_pk) == cell_hash(pk1)) {
+      throw_if(33, share1 != msg_value);
+    }
+
+    if (cell_hash(msg_pk) == cell_hash(pk2)) {
+      throw_if(33, share2 != msg_value);
+    }
+
+    var waitingOneCell = mkStateWaitingOne(s_addr, msg_pk);
+    return putState(globalCell, waitingOneCell);
+  }
+
+  if (stateTag == StateTags::WaitingOne()) {
+    ;; WaitingOne addr1 pk1 -> Open (OpenState addr1 addr2)
+    var (stateAddr, statePk) = parseStateWaitingOne(ls);
+
+    cell addr1 = stateAddr;
+    cell addr2 = msg_addr;
+
+    if ((cell_hash(statePk) == cell_hash(pk1))
+        & (cell_hash(pk2) == cell_hash(msg_pk))) {
+      throw_if(33, share2 != msg_value);
+    }
+
+    if ((cell_hash(statePk) == cell_hash(pk2))
+        & (cell_hash(pk1) == cell_hash(msg_pk))) {
+      throw_if(33, share1 != msg_value);
+      addr1 = msg_addr;
+      addr2 = stateAddr;
+    }
+
+    var stateOpenCell = mkStateOpen(addr1, addr2);
+
+    return putState(globalCell, stateOpenCell);
+  }
+
+  throw(33); ;; none of appropriate states for this message matches
+}
+
+;; slice is input in ton/crypto/smartcont/wallet-code.fc
+() recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
+  var cs = in_msg_cell.begin_parse();
+  var flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+  if (flags & 1) {
+    ;; ignore all bounced messages
+    return ();
+  }
+
+  ;; need comments in simple transfer message
+  throw_if(33, in_msg.slice_empty?());
+
+  var s_addr = cs~load_msg_addr();
+  var op = in_msg~load_uint(32); 
+
+  if (op == 0) {
+    return process_simple_transfer(s_addr, msg_value, in_msg);
+  }
+  return ();
+}
