@@ -223,6 +223,10 @@ The contract is waiting for a confirmation from the other party. Transitions:
   gets the amount of tokens equal to their initial share plus their request;
   and the second party gets the amount of tokens equal to their initial share
   minus the first party’s request (or plus their request, which is the same).
+  If one of the requested payout values was negative and its absolute value
+  is more than the corresponding party’s contributed share, the computation
+  proceeds as if the requested payout was equal to this share’s value negated,
+  and the party is fined.
 * The other party requests the channel to be closed (`MkRequestClose`) and the
   requested payouts do not agree with each other exactly. In this case the
   final distribution is computed as follows, assuming both IOUs are properly signed:
