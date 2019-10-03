@@ -7,35 +7,48 @@
   ;; do nothing
 }
 
-;; global, local
+  ;; globalState, localState
 (cell, cell) getState() impure {
   var s = get_data().begin_parse();
   return (s~load_ref(), s~load_ref());
 }
 
-() putState(cell global, cell local) impure {
+() putState(cell globalState, cell localState) impure {
   var c = begin_cell()
-    .store_ref(global)
-    .store_ref(local)
+    .store_ref(globalState)
+    .store_ref(localState)
     .end_cell();
+}
+
+int slice_eq_asm(slice a, slice b) asm "SDEQ";
+
+int slice_eq(slice a, slice b) {
+  return slice_eq_asm(a, b);
+}
+
+;; for now only bits checked for eq
+int pk_eq(cell pk1, cell pk2) {
+  var s1 = pk1.begin_parse();
+  var s2 = pk2.begin_parse();
+
+  return s1.slice_eq(s2);
 }
 
 () process_simple_transfer(
   slice s_addr,
   int msg_value,
   slice in_msg) impure {
+
   cell msg_addr = begin_cell().store_slice(s_addr).end_cell();
   var msg_pk = in_msg~load_ref();
 
-  var (globalCell, localCell) = getState();
+  var (globalStateC, localStateC) = getState();
 
   var (pk1, pk2, share1, share2, _, _, _)
-    = parseGlobalState(globalCell);
+    = parseGlobalState(globalStateC);
 
-  var ls = localCell.begin_parse();
-  var (_, stateTag) = ls.load_uint(32);
-
- 
+  var ls = localStateC.begin_parse();
+  var (_, stateTag) = ls.load_StateTag();
 
   if (stateTag == StateTags::WaitingBoth()) {
     ;; WaitingBoth -> WaitingOne s_addr pk
@@ -48,23 +61,19 @@
     }
 
     var waitingOneCell = mkStateWaitingOne(s_addr, msg_pk);
-    return putState(globalCell, waitingOneCell);
-  }
-
-  if (stateTag == StateTags::WaitingOne()) {
+    return putState(globalStateC, waitingOneCell);
+  } elseif (stateTag == StateTags::WaitingOne()) {
     ;; WaitingOne addr1 pk1 -> Open (OpenState addr1 addr2)
     var (stateAddr, statePk) = parseStateWaitingOne(ls);
 
     cell addr1 = stateAddr;
     cell addr2 = msg_addr;
 
-    if ((cell_hash(statePk) == cell_hash(pk1))
-        & (cell_hash(pk2) == cell_hash(msg_pk))) {
+    if (statePk.pk_eq(pk1) & pk2.pk_eq(msg_pk)) {
       throw_if(33, share2 != msg_value);
     }
 
-    if ((cell_hash(statePk) == cell_hash(pk2))
-        & (cell_hash(pk1) == cell_hash(msg_pk))) {
+    if (statePk.pk_eq(pk2) & pk1.pk_eq(msg_pk)) {
       throw_if(33, share1 != msg_value);
       addr1 = msg_addr;
       addr2 = stateAddr;
@@ -72,10 +81,11 @@
 
     var stateOpenCell = mkStateOpen(addr1, addr2);
 
-    return putState(globalCell, stateOpenCell);
+    return putState(globalStateC, stateOpenCell);
+  } else {
+    ;; none of appropriate states for this message matches
+    throw(33);
   }
-
-  throw(33); ;; none of appropriate states for this message matches
 }
 
 ;; slice is input in ton/crypto/smartcont/wallet-code.fc
@@ -95,6 +105,7 @@
 
   if (op == 0) {
     return process_simple_transfer(s_addr, msg_value, in_msg);
+  } else {
+    throw(33);
   }
-  return ();
 }

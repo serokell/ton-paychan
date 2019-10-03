@@ -3,15 +3,24 @@
 ;; SPDX-License-Identifier: MPL-2.0
 
 ;; Local state serialization/parsing
-;; First 32 bits of cell is constructorId
+;; First 4 bits of cell is constructorId
+
+builder store_StateTag(builder b, int tag) {
+  return b.store_uint(4, tag);
+}
+
+(slice, int) load_StateTag(slice s) {
+  return s.load_uint(4);
+}
 
 ;; MkStateWaitingBoth
 
 int StateTags::WaitingBoth() { return 1; }
 
-builder store_StateWaitingBoth() {
+cell mkStateWaitingBoth() {
   return begin_cell()
-    .store_int(32, StateTags::WaitingBoth());
+    .store_StateTag(StateTags::WaitingBoth())
+    .end_cell();
 }
 
 (slice, ()) load_StateWaitingBoth(slice s) { return (s, ()); }
@@ -27,7 +36,7 @@ cell mkStateWaitingOne(slice addr, cell pk_cell) {
       .end_cell();
 
   return begin_cell()
-    .store_uint(32, StateTags::WaitingOne())
+    .store_StateTag(StateTags::WaitingOne())
     .store_ref(addr_cell)
     .store_ref(pk_cell)
     .end_cell();
@@ -35,7 +44,7 @@ cell mkStateWaitingOne(slice addr, cell pk_cell) {
 
 ;; addr, pk
 (cell, cell) parseStateWaitingOne(slice s) {
-  throw_if(33, s~load_uint(32) != StateTags::WaitingOne());
+  throw_if(33, s~load_StateTag() != StateTags::WaitingOne());
   var addr = s~load_ref();
   var pk = s~load_ref();
   return (addr, pk);
@@ -47,7 +56,7 @@ int StateTags::Open() { return 3; }
 
 cell mkStateOpen(cell addr1, cell addr2) {
   return begin_cell()
-    .store_uint(32, StateTags::Open())
+    .store_StateTag(StateTags::Open())
     .store_ref(addr1)
     .store_ref(addr2)
     .end_cell();
