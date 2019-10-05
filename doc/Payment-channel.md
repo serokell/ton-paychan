@@ -140,6 +140,7 @@ data OpenState = MkOpenState (Address, Address)
 
 data ClosingState = MkClosingState
   { requester :: PublicKey  -- ^ Who requested the channel closed
+  , openState :: OpenState  --^ Details from the previous state
   , request :: CloseRequest  -- ^ Details of the request provided
   , timestamp :: Timestamp  -- ^ When the channel was requested to close
   }
@@ -156,21 +157,14 @@ Users can make the following requests:
 ```haskell
 data Request
   | MkRequestClose CloseRequest
-  | MkRequestCloseBad CloseBadRequest
   | MkRequestDispute DisputeRequest
   | MkRequestDisputeOk
   | MkRequestDisputeBad DisputeBadRequest
-  | MkRequestCloseOk
   | MkRequestTimeout
 
 data CloseRequest = MkCloseRequest
-  { payout :: UInt120  -- ^ Requested payout
+  { payout :: Int121  -- ^ Requested payout
   , iou :: Maybe Iou  -- ^ Last IOU from the other party
-  }
-
-data CloseBadRequest = MkCloseBadRequest
-  { payout :: UInt120  -- ^ Requested payout
-  , iou :: Iou  -- ^ Mandatory IOU confirming the proposed payout
   }
 
 data DisputeRequest = MkDisputeRequest
@@ -199,7 +193,7 @@ configuration) and local state `MkStateWaitingBoth`. Transitions possible:
 One of the parties has contributed their share and the contract waiting for
 the other one. Possible transitions:
 
-* The first party requests a refund (`MkCloseOk`) -> their share is returned
+* The first party requests a refund (`MkDisputeOk`) -> their share is returned
   back to their address and the contract is destroyed.
 * The second party contributes their share -> `MkStateOpen`. The address
   of the second party is recorded as well.
@@ -222,22 +216,43 @@ arbitration. Possible transitions:
 
 The contract is waiting for a confirmation from the other party. Transitions:
 
-* The other party agrees with the proposed distribution (`MkRequestCloseOk`).
-  The payouts are made and the contract is destroyed.
-* The other party does not agree with the proposed distribution
-  (`MkRequestCloseBad`). They must provide an IOU that:
-    * is signed by the party that requested the channel closed,
-    * happened-after the original IOU,
-    * shows that they owe to the requester less than originally requested,
-    * they are owed at least as much as their new requested payout.
-  If all the above are true, the payout is made according to the contender’s
-  request and the original requester is fined. Otherwise the payout is made
-  according to the original request and the contender is fined.
+* The other party requests the channel to be closed (`MkRequestClose`) and the
+  requested payouts agree with each other exactly, that is, their sum is 0.
+  In this case the payout is performed according to the requests and the
+  contract is destroyed. “According to the requests” means that the first party
+  gets the amount of tokens equal to their initial share plus their request;
+  and the second party gets the amount of tokens equal to their initial share
+  minus the first party’s request (or plus their request, which is the same).
+  If one of the requested payout values was negative and its absolute value
+  is more than the corresponding party’s contributed share, the computation
+  proceeds as if the requested payout was equal to this share’s value negated,
+  and the party is fined.
+* The other party requests the channel to be closed (`MkRequestClose`) and the
+  requested payouts do not agree with each other exactly. In this case the
+  final distribution is computed as follows, assuming both IOUs are properly signed:
+    * `owes1`, the amount owed by the first party, is computed as the maximum of
+      `(uome - payout)` from their request and `iou` from the second party’s
+      request.
+    * `owes2`, the amount owed by the second party is computed symmetrically.
+    * The payout proceeds as if the requested balances were `(owes2 - owes1)`
+      and `(owes1 - owes2)` respectively.
+  If any of the IOUs is was not provided, it is assumed that it contains zeroes
+  in its `iou` and `uome` fields.
+  If one of the IOUs is not properly signed, the computation proceeds as if
+  the corresponding party did not provide an IOU at all, and in addition
+  this party is fined.
+  If both IOUs are not properly signed, the contract transitions back to
+  `MkStateOpen`.
 * The other party disappears and the original requester forces the channel
   to close (`MkRequestTimeout`). If the amount of time given by `timeout` has
   passed, the payment is made according to the request and the other party
   is fined. Otherwise the request is rejected. (TODO: charge for incorrect
   requests.)
+
+If the contract is destroyed, the locked fines amounts are returned to their
+respective parties, unless one of the was fined in the process, in which case
+both locked amounts are transferred to the honest party.
+
 
 ### A dispute is happening (`MkStateDispute`)
 
@@ -248,10 +263,10 @@ ever agreed to. In order to contend, the second party has to present an IOU
 that shows that the first party indeed transferred to them that much.
 Transitions:
 
-* The second party agrees that the dispute is valid (`MkRequestCloseOk`).
+* The second party agrees that the dispute is valid (`MkRequestDisputeOk`).
   The payout is made as requested and the offending party is fined.
 * The second party disagrees with the dispute (`MkRequestDisputeBad`).
-  They have to show any IOU signed by the first party that shows that they
+  They have to provide any IOU signed by the first party that shows that they
   transferred in total at least as much as shown in the allegedly bad IOU.
   If they succeed in doing so, the payout is made according to their new
   request and the first party is fined. Otherwise the payout is made according
@@ -263,6 +278,8 @@ Transitions:
 ## TODO
 
 * Figure out how to punish parties for incorrect requests
+* Set gas limit to make sure the locked amounts are never spent for gas
+* Send the extra gas-tokens somewhere when closed
 
 
 ## Further work
