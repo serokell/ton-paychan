@@ -1,0 +1,11 @@
+
+
+(int, int) plusAssignStoreInc(int a, int b) {
+ return (a + 1, a + b);
+}
+
+int play () impure {
+  int a = 1;
+  var b = a~plusAssignStoreInc(22);
+  return a;
+}

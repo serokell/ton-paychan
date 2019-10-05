@@ -1,4 +1,111 @@
-// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
-//
-// SPDX-License-Identifier: MPL-2.0
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
 
+
+() recv_external (slice in_msg) impure {
+  ;; do nothing
+}
+
+  ;; globalState, localState
+(cell, cell) getState() impure {
+  var s = get_data().begin_parse();
+  return (s~load_ref(), s~load_ref());
+}
+
+() putState(cell globalState, cell localState) impure {
+  var c = begin_cell()
+    .store_ref(globalState)
+    .store_ref(localState)
+    .end_cell();
+}
+
+int slice_eq_asm(slice a, slice b) asm "SDEQ";
+
+int slice_eq(slice a, slice b) {
+  return slice_eq_asm(a, b);
+}
+
+;; for now only bits checked for eq
+int pk_eq(cell pk1, cell pk2) {
+  var s1 = pk1.begin_parse();
+  var s2 = pk2.begin_parse();
+
+  return s1.slice_eq(s2);
+}
+
+() process_simple_transfer(
+  slice s_addr,
+  int msg_value,
+  slice in_msg) impure {
+
+  cell msg_addr = begin_cell().store_slice(s_addr).end_cell();
+  var msg_pk = in_msg~load_ref();
+
+  var (globalStateC, localStateC) = getState();
+
+  var (pk1, pk2, share1, share2, _, _, _)
+    = parseGlobalState(globalStateC);
+
+  var ls = localStateC.begin_parse();
+  var (_, stateTag) = ls.load_StateTag();
+
+  if (stateTag == StateTags::WaitingBoth()) {
+    ;; WaitingBoth -> WaitingOne s_addr pk
+    if (cell_hash(msg_pk) == cell_hash(pk1)) {
+      throw_if(33, share1 != msg_value);
+    }
+
+    if (cell_hash(msg_pk) == cell_hash(pk2)) {
+      throw_if(33, share2 != msg_value);
+    }
+
+    var waitingOneCell = mkStateWaitingOne(s_addr, msg_pk);
+    return putState(globalStateC, waitingOneCell);
+  } elseif (stateTag == StateTags::WaitingOne()) {
+    ;; WaitingOne addr1 pk1 -> Open (OpenState addr1 addr2)
+    var (stateAddr, statePk) = parseStateWaitingOne(ls);
+
+    cell addr1 = stateAddr;
+    cell addr2 = msg_addr;
+
+    if (statePk.pk_eq(pk1) & pk2.pk_eq(msg_pk)) {
+      throw_if(33, share2 != msg_value);
+    }
+
+    if (statePk.pk_eq(pk2) & pk1.pk_eq(msg_pk)) {
+      throw_if(33, share1 != msg_value);
+      addr1 = msg_addr;
+      addr2 = stateAddr;
+    }
+
+    var stateOpenCell = mkStateOpen(addr1, addr2);
+
+    return putState(globalStateC, stateOpenCell);
+  } else {
+    ;; none of appropriate states for this message matches
+    throw(33);
+  }
+}
+
+;; slice is input in ton/crypto/smartcont/wallet-code.fc
+() recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
+  var cs = in_msg_cell.begin_parse();
+  var flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+  if (flags & 1) {
+    ;; ignore all bounced messages
+    return ();
+  }
+
+  ;; need comments in simple transfer message
+  throw_if(33, in_msg.slice_empty?());
+
+  var s_addr = cs~load_msg_addr();
+  var op = in_msg~load_uint(32); 
+
+  if (op == 0) {
+    return process_simple_transfer(s_addr, msg_value, in_msg);
+  } else {
+    throw(33);
+  }
+}
