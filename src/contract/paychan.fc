@@ -2,7 +2,6 @@
 ;;
 ;; SPDX-License-Identifier: MPL-2.0
 
-
 () recv_external (slice in_msg) impure {
   ;; do nothing
 }
