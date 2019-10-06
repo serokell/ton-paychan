@@ -26,5 +26,5 @@ builder store_pk(builder b, slice s) {
 }
 
 builder store_timestamp(builder b, int timestamp) {
-  return b.store_uint(256, timestamp);
+  return b.store_uint(timestamp, 256);
 }

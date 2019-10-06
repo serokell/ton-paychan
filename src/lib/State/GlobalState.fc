@@ -6,13 +6,13 @@ cell mkGlobalState(
   int nonce) {
 
   return begin_cell()
-    .store_uint(256, pk1)
-    .store_uint(256, pk2)
-    .store_uint(120, share1)
-    .store_uint(120, share2)
-    .store_uint(32, timeout)
-    .store_int(120, fineAmount)
-    .store_uint(64, nonce)
+    .store_uint(pk1, 256)
+    .store_uint(pk2, 256)
+    .store_uint(share1, 120)
+    .store_uint(share2, 120)
+    .store_uint(timeout, 32)
+    .store_int(fineAmount, 120)
+    .store_uint(nonce, 64)
     .end_cell();
 }
 
