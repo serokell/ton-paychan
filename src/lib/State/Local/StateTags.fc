@@ -1,7 +1,7 @@
 ;; First 4 bits of cell is constructorId
                                             
 builder store_StateTag(builder b, int tag) {
-  return b.store_uint(4, tag);
+  return b.store_uint(tag, 4);
 }
                                             
 (slice, int) load_StateTag(slice s) {
