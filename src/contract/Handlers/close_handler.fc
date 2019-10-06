@@ -1,0 +1,91 @@
+cell handle_close(
+  slice msg_src_addr,
+  cell closeReq,
+  cell globalState,
+  cell localState) {
+
+  var ls = localState.begin_parse();
+  var (_, stateTag) = ls.load_StateTag();
+
+
+  var (pk1, pk2, share1, share2, _, _, _)
+    = parseGlobalState(globalState);
+
+  var (payout, miou) = parseCloseReq(closeReq);
+
+  if (stateTag == StateTags::Open()) {
+    ;; Open -> Closing
+    
+    var (addr1, addr2) = parseOpenState(ls);
+    
+    int requesterShare = share1;
+    slice requesterPk = pk1;
+    int otherShare = share2;
+    if (msg_src_addr.slice_eq(addr1)) {
+      requesterShare = share1;
+      requesterPk = pk1;
+      otherShare = share2;
+    } elseif (msg_src_addr.slice_eq(addr2)) {
+      requesterShare = share2;
+      requesterPk = pk2;
+      otherShare = share1;
+    } else {
+      ;; unknown participant
+      throw(33);
+    }
+
+    if ((otherShare < payout) & ((requesterShare + payout)) < 0) {
+      ;; payout impossible
+      throw(33);
+    }
+
+    cell newLocalState =
+      mkStateClosing(
+        requesterPk,
+        getOpenState(localState),
+        closeReq,
+        now()
+      );
+
+    return newLocalState;
+  } elseif(stateTag == StateTags::Closing()) {
+    ;; Closing -> ???
+    var (prevReqPk, openState, prevCloseReq, prevTimestamp) =
+      parseStateClosing(ls);
+
+    ;; check that payout value provided makes sensee
+
+    var (prevPayout, prevIou) = parseCloseReq(prevCloseReq);
+    if (payout + prevPayout == 0) {
+      var (addr1, addr2) = parseOpenState(openState.begin_parse());
+      var payout1 = prevPayout;
+      var payout2 = payout;
+      if (msg_src_addr.slice_eq(addr1)) {
+        payout1 = payout;
+        payout2 = prevPayout;
+      } elseif (msg_src_addr.slice_eq(addr2)) {
+        payout1 = prevPayout;
+        payout2 = payout;
+      } else {
+        ;; unknown participant
+        throw(33);
+      }
+
+      ;; didn't get exact spect how to fine if this happens?
+      if (- payout1 > share2) {
+        payout1 = - share2;
+      }
+
+      if (- payout2 > share1) {
+        payout2 = - share1;
+      }
+
+      proceedPayout(addr1, share1 + payout1, addr2, share2 + payout2);
+      ;; maybe make another state like `Terminated`
+      return localState;
+    }
+  } else {
+    throw(33);
+  }
+  return localState;
+}
