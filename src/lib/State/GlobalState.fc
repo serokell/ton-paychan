@@ -10,8 +10,8 @@ cell mkGlobalState(
   int nonce) {
 
   return begin_cell()
-    .store_uint(256, pk1)
-    .store_uint(256, pk2)
+    .store_pk(pk1)
+    .store_pk(pk2)
     .store_int(121, share1)
     .store_int(121, share2)
     .store_uint(32, timeout)
@@ -24,8 +24,8 @@ cell mkGlobalState(
 _ parseGlobalState(cell data) {
   slice ds = data.begin_parse();
   var res =
-    ( ds~load_uint(256) ;; pk1
-    , ds~load_uint(256) ;; pk2
+    ( ds~load_pk()     ;; pk1
+    , ds~load_pk()     ;; pk2
     , ds~load_int(121) ;; share1
     , ds~load_int(121) ;; share2
     , ds~load_uint(32) ;; timeout

@@ -1,0 +1,9 @@
+;; MkStateWaitingBoth
+
+cell mkStateWaitingBoth() {
+  return begin_cell()
+    .store_StateTag(StateTags::WaitingBoth())
+    .end_cell();
+}
+
+(slice, ()) load_StateWaitingBoth(slice s) { return (s, ()); }
