@@ -1,0 +1,24 @@
+
+
+() send_message_back(addr, body, grams, mode) impure {
+  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 011000
+  var msg = begin_cell()
+    .store_uint(0x18, 6)
+    .store_slice(addr)
+    .store_grams(grams)
+    .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+    .store_uint(0, 32); 
+  if (body >= 0) {
+    msg~store_uint(body, 32);
+  }
+  send_raw_message(msg.end_cell(), mode);
+}
+
+() proceedPayout(
+  slice addr1, int amount1,
+  slice addr2, int amount2
+  ) impure {
+
+  send_message_back(addr1, 0, amount1, 0);
+  send_message_back(addr2, 0, amount2, 0);
+}

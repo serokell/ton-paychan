@@ -1,0 +1,14 @@
+;; globalState, localState
+(cell, cell) getState() impure {
+  var s = get_data().begin_parse();
+  return (s~load_ref(), s~load_ref());
+}
+                                                       
+() putLocalState(cell localState) impure {
+  var (_, globalState) = get_data().begin_parse().load_ref();
+  var c = begin_cell()
+    .store_ref(globalState)
+    .store_ref(localState)
+    .end_cell();
+  return set_data(c);
+}
