@@ -1,5 +1,3 @@
-
-
 () send_message_back(addr, body, grams, mode) impure {
   ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 011000
   var msg = begin_cell()
