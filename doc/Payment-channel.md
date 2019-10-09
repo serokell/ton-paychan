@@ -109,7 +109,59 @@ numbers.
 
 ### Message processing
 
-TODO
+Each party shall maintain their own view of the state of the payment protocol:
+
+```
+data CliState = MkCliState
+  { cliConfig :: CliConfig
+  , paymentsState :: PaymentsState
+  }
+
+data ChanConfig = MkCliConfig
+  { chanAddr :: ContractAddress
+  , chanGlobalState :: GlobalState  -- ^ See below.
+  }
+
+data PaymentsState = MkPaymentsState
+  { weOwe :: UInt248  -- ^ How much we owe in total
+  , theyOwe :: UInt248  -- ^ How much we are owed in total
+  , lastIou :: Maybe Iou  -- ^ Last IOU we received from them
+  , missingAmount :: UInt248  -- ^ Value in payments detected as missing
+  }
+```
+
+The `weOwe` and `theyOwe` fields serve dual purpose:
+
+1. They establish the actual amounts owed by the parties to each other.
+2. They function as a vector clock and allow to establish a happened-before
+   relation on IOU messages.
+
+Due to the second item above, the micro-payment protocol is fully asynchronous,
+does not require any confirmations or that the payments arrive in order.
+
+When a new IOU arrives from the other party, the following steps are performed:
+
+1. Check that their `uome` field of the IOU is not greater than our recorded
+   `weOwe` value. It is impossible that a honest party would think that we owe
+   them more than what we think we ever promised, thus it implies that the
+   other party is trying to cheat, so this IOU is rejected and the other
+   party is reported.
+2. Check that `(iou - uome)` is not greater than their share contributed to
+   the channel. Otherwise reject the IOU.
+3. Compare their `iou` with our `theyOwe`:
+    * If it is greater or equal, then this is a new transaction. Check that
+      `amount` equals `iou - theyOwe`. If it is not the case, warn the user
+      that some incoming payment that happened before this one went missing
+      and add the difference to `missingAmount`. Then set `theOwe := iou`.
+    * If it is less, then this is one of the previously missing transactions.
+      Check that `amount` is not greater than `missingAmount`, otherwise reject.
+      Subtract `amount` from `missingAmount`.
+
+To make a new micro-payment:
+
+1. Add the desired amount to `weOwe`.
+2. Prepare a new IOU with the updated values and send it.
+
 
 ## Contract logic
 
@@ -121,6 +173,7 @@ data PayChanState = MkPayChanState
   , localState :: LocalState
   }
 
+-- | Channel config.
 data GlobalState = MkGlobalState
   { parties :: (PublicKey, PublicKey)
   , shares :: (UInt120, UInt120)
