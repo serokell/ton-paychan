@@ -231,7 +231,7 @@ The contract is waiting for a confirmation from the other party. Transitions:
   requested payouts do not agree with each other exactly. In this case the
   final distribution is computed as follows, assuming both IOUs are properly signed:
     * `owes1`, the amount owed by the first party, is computed as the maximum of
-      `(uome - payout)` from their request and `iou` from the second party’s
+      `(iou - payout)` from their request and `iou` from the second party’s
       request.
     * `owes2`, the amount owed by the second party is computed symmetrically.
     * The payout proceeds as if the requested balances were `(owes2 - owes1)`
