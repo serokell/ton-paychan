@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library KeyUtil  // Manipulating public and secret keys
+
+{ +".sk" dup ."Loading secret key from file `" type ."`" cr
+  file>B dup Blen 32 <> abort"Secret key must be exactly 32 bytes long"
+  dup priv>pub
+} : load-key-pair
+// ( keyname -- sk pk)
+
+{ +".pk" dup ."Loading public key from file `" type ."`" cr
+  file>B dup Blen 32 <> abort"Public key must be exactly 32 bytes long"
+} : load-key-public
+// ( keyame -- pk )
+
+{ dup
+  +".sk"
+  dup file-exists?
+    { "File `" swap $+ +"` already exists. Not overwriting." fail } if
+  swap
+  +".pk"
+  dup file-exists?
+    { "File `" swap $+ +"` already exists. Not overwriting." fail } if
+  newkeypair
+  rot dup ."Saving new public key to file `" type ."`" cr B>file
+  swap dup ."Saving corresponding secret key to file `" type ."`" cr B>file
+} : gen-key-pair
+// ( keyname -- )

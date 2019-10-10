@@ -7,7 +7,7 @@ test: test/fift test/interop
 
 .PHONY:  test/fift
 test/fift:
-	@find test -name '*Tests.fif' | xargs fift -s
+	@find test -name '*Tests.fif' -exec fift -s {} \;
 
 .PHONY:  test/interop
 test/interop: test/interop/sign

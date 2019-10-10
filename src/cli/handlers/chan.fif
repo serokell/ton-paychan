@@ -1,0 +1,35 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library Handlers_new
+
+"../CliState.fif" include
+
+' cmdline_dispatch : cli_chan
+
+{ ."Creating a new payment channel..." cr
+  cmdline_getarg  // name of our sk file
+  load-key-pair
+
+  cmdline_getarg_int  // share our (grams)
+
+  cmdline_getarg  // name of their pk file
+  load-key-public
+
+  cmdline_getarg_int  // share their (grams)
+  rot swap
+
+  cmdline_getarg_int  // timeout (seconds)
+
+  cmdline_getarg_int  // fineAmount (grams)
+
+  now  // nonce
+
+  mkGlobalState
+
+  // TODO[gpevnev]: output the deployment msg
+  // TODO[kirelagin]: save cli state, create joining request
+  // stack = sk globalState
+  // cmdline_getarg_int  // extra for fuel (grams)
+} :cmdline cli_chan_new

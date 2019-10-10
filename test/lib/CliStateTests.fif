@@ -1,0 +1,24 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+"Test.fif" include
+"CliState.fif" include
+
+@tests CliState.fif
+
+{ mkNewPaymentsState
+  dup getPaymentsStateWeOwe 0 = not abort"Wrong weOwe"
+  dup getPaymentsStateTheyOwe 0 = not abort"Wrong theyOwe"
+  dup getPaymentsStateMissingAmount 0 = not abort"Wrong missingAmount"
+      getPaymentsStateIou abort"Should not have iou"
+} @test mkNewPaymentsState
+
+{ 123 456 <b 10 32 i, b> 788 mkPaymentsStateIou
+  111 swap addPaymentsStateMissingAmount
+  dup getPaymentsStateMissingAmount 899 = not abort"Wrong missingAmount"
+  dup getPaymentsStateWeOwe 123 = not abort"Wrong weOwe"
+  dup getPaymentsStateTheyOwe 456 = not abort"Wrong theyOwe"
+      getPaymentsStateIou not abort"Missing iou"
+      <s 32 i@ 10 = not abort"Wrong iou"  // not really iou
+} @test addPaymentsStateMissingAmount

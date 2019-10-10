@@ -1,0 +1,34 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library GlobalState  // Payment channel global (immutable) state
+
+{ dup
+  Blen 32 <> abort"Key must be exactly 32 bytes long"
+} : _assert_key
+// ( key -- key )
+
+{ <b
+  7 roll _assert_key B,
+  6 roll _assert_key B,
+  5 roll 121 i,
+  4 roll 121 i,
+  3 roll 32 u,
+  2 roll 120 u,
+  1 roll 64 u,
+  b>
+} : mkGlobalState
+// ( pk1 pk2 share1 share2 timeout fine nonce -- globalState )
+
+{ <s
+  32 B@+
+  32 B@+
+  121 i@+
+  121 i@+
+  32 u@+
+  120 u@+
+  64 u@+
+  s>
+} : parseGlobalState
+// ( globalState -- pk1 pk2 share1 share2 timeout fine nonce )

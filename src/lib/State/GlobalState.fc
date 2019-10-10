@@ -1,3 +1,7 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
 cell mkGlobalState(
   int pk1, int pk2,
   int share1, int share2,
@@ -8,10 +12,10 @@ cell mkGlobalState(
   return begin_cell()
     .store_uint(256, pk1)
     .store_uint(256, pk2)
-    .store_uint(120, share1)
-    .store_uint(120, share2)
+    .store_int(121, share1)
+    .store_int(121, share2)
     .store_uint(32, timeout)
-    .store_int(120, fineAmount)
+    .store_uint(120, fineAmount)
     .store_uint(64, nonce)
     .end_cell();
 }
@@ -20,13 +24,13 @@ cell mkGlobalState(
 _ parseGlobalState(cell data) {
   slice ds = data.begin_parse();
   var res =
-    ( ds~load_ref()     ;; pk1
-    , ds~load_ref()     ;; pk2
-    , ds~load_uint(120) ;; share1
-    , ds~load_uint(120) ;; share2
-    , ds~load_uint(32)  ;; timeout
-    , ds~load_int(120)  ;; fineAmount
-    , ds~load_uint(64)  ;; nonce
+    ( ds~load_uint(256) ;; pk1
+    , ds~load_uint(256) ;; pk2
+    , ds~load_int(121) ;; share1
+    , ds~load_int(121) ;; share2
+    , ds~load_uint(32) ;; timeout
+    , ds~load_uint(120) ;; fineAmount
+    , ds~load_uint(64) ;; nonce
     );
   ds.end_parse();
   return res;

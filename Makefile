@@ -14,7 +14,7 @@ func_compiler = func
 
 ##
 
-export FIFTPATH:=src/lib:$(fift_lib)
+export FIFTPATH:=src/cli:src/lib:$(fift_lib)
 
 all: compile
 
