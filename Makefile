@@ -36,7 +36,8 @@ build/paychan.boc: build/paychan_write_boc.fif
 	@mkdir -p $(@D)
 	$(fift_compiler) -I$(fift_lib) $^
 
-include test/Makefile
-
 clean:
 	rm -rf build
+
+include test/Makefile
+include scripts/Makefile

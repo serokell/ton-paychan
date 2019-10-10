@@ -17,7 +17,7 @@ cell handle_simple_transfer(
      var requesterShare = msg_pk.pk2Share(globalState);
 
      ;; supplied not enough
-     throw_if(33, requesterShare != msg_value);
+     throw_if(1003, requesterShare > msg_value);
 
      return mkStateWaitingOne(msg_src_addr, msg_pk);
    } elseif (stateTag == StateTags::WaitingOne()) {
@@ -28,11 +28,11 @@ cell handle_simple_transfer(
      slice addr2 = msg_src_addr;
 
      if (statePk.pk_eq(pk1) & pk2.pk_eq(msg_pk)) {
-       throw_if(33, share2 != msg_value);
+       throw_if(1004, share2 > msg_value);
      }
 
      if (statePk.pk_eq(pk2) & pk1.pk_eq(msg_pk)) {
-       throw_if(33, share1 != msg_value);
+       throw_if(1005, share1 > msg_value);
        addr1 = msg_src_addr;
        addr2 = stateAddr;
      }
@@ -40,7 +40,7 @@ cell handle_simple_transfer(
      return mkStateOpen(addr1, addr2);
    } else {
      ;; none of appropriate states for this message matches
-     throw(33);
+     throw(1006);
    }
    return localState;
  }

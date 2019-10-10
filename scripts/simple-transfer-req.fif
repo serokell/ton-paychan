@@ -1,0 +1,13 @@
+// $1 = pk filename, $2 = output filename
+
+$1 file>B constant pk
+$2 constant output-filename
+
+<b
+  0 32 u, // ReqOp
+  pk B,
+b>
+
+."Saving to build/msg/simple-transfer.boc"
+2 boc+>B
+output-filename tuck B>file

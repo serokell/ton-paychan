@@ -15,7 +15,7 @@ cell handle_timeout(slice msg_src_addr,
     var reqPk = msg_src_addr.addr2Pk(globalState, openState);
 
     ;; timeout from other party, don't know what to do in this case
-    throw_if(33, ~ reqPk.pk_eq(prevReqPk));
+    throw_if(1011, ~ reqPk.pk_eq(prevReqPk));
 
     var (reqPayout, _) = parseCloseReq(closeReq);
     int reqShare = msg_src_addr.addr2Share(globalState, localState);
@@ -31,7 +31,7 @@ cell handle_timeout(slice msg_src_addr,
     }
   } else {
     ;; transition not possible
-    throw(33);
+    throw(1012);
   }
   return localState;
 }

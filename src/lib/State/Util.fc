@@ -9,7 +9,7 @@ slice pk2Addr(slice pk, cell globalState, cell openState) {
     return addr2;
   } else {
     ;; unknown PK
-    throw(33);
+    throw(1013);
   }
   ;; unreachable code, but does not compile without it
   return addr1;
@@ -26,7 +26,7 @@ slice addr2Pk(slice addr, cell globalState, cell openState) {
     return pk2;
   } else {
     ;; unkonwn addr
-    throw(33);
+    throw(1014);
   }
   ;; unreachable code again
   return addr1;
@@ -42,7 +42,7 @@ int addr2Share(slice addr, cell globalState, cell openState) {
   } elseif (addr.addr_eq(addr2)) {
     return share2;
   } else {
-    throw(33);
+    throw(1015);
   }
   ;; unreachable code
   return share1;
@@ -57,7 +57,7 @@ int pk2Share(slice pk, cell globalState) {
   } elseif (pk.pk_eq(pk2)) {
     return share2;
   } else {
-    throw(33);
+    throw(1016);
   }
   ;; unreachable code
   return share1;

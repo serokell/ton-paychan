@@ -1,0 +1,59 @@
+#!/usr/bin/env fift -s
+"TonUtil.fif" include
+"Asm.fif" include
+
+{ ."usage: " @' $0 type ." <workchain-id> [<init-state-output-file>]" cr
+  ."Creates a StateInit boc for specified workchain" cr
+} : usage
+$# 1- -2 and ' usage if
+
+$1 parse-workchain-id =: wc    // set workchain id from command line argument
+def? $2 { @' $2 } { "new-wallet" } cond constant file-base
+
+."Creating new StateInit for workchain " wc . cr
+
+"key1.pk" constant pk1-name
+"key2.pk" constant pk2-name
+
+// generated only once
+// newkeypair pk1-name B>file drop
+// newkeypair pk2-name B>file drop
+
+pk1-name file>B constant pk1
+pk1 Blen 32 = not abort"PK1 is not 32 bytes"
+pk2-name file>B constant pk2
+pk2 Blen 32 = not abort"PK2 is not 32 bytes"
+
+1 constant share1
+2 constant share2
+10000000 constant timeout
+10 constant fineAmount
+now constant nonce
+
+// Create new simple wallet
+"build/paychan.boc" file>B B>boc
+// code
+<b
+  <b
+    pk1 B,
+    pk2 B,
+    share1 120 u,
+    share2 120 u,
+    timeout 32 u,
+    fineAmount 120 i,
+    nonce 64 u,
+  b> // globalState
+  ref,
+  <b 1 4 u, b> // localState WaitingBoth
+  ref,
+b>
+null // no libraries
+// Libs{ x{ABACABADABACABA} drop x{AAAA} s>c public_lib x{1234} x{5678} |_ s>c public_lib }Libs
+<b b{0011} s, 3 roll ref, rot ref, swap dict, b>  // create StateInit
+dup ."StateInit: " <s csr. cr
+dup hashu wc swap 2dup 2constant wallet_addr
+."StateInit created for address = " 2dup .addr cr
+."Non-bounceable address (for init): " 2dup 7 .Addr cr
+."Bounceable address (for later access): " 6 .Addr cr
+2 boc+>B
+"build/paychan-init.boc" tuck B>file
