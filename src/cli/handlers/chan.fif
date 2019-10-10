@@ -10,7 +10,8 @@ library Handlers_new
 
 
 { 2 boc+>B
-  "paychan.join" B>file
+  "paychan.join"
+  dup ."Saving join request to file `" type ."`" cr B>file
 } : _saveJoinRequest
 // ( globalState -- )
 
