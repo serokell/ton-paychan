@@ -19,7 +19,7 @@ library CliState  // The state of the cli tool
   1 roll 248 u,
   b>
 } : mkPaymentsState
-// weOwe theyOwe missingAmount -> paymentsState
+// ( weOwe theyOwe missingAmount -- paymentsState )
 
 { <b
   4 roll 248 u,
@@ -28,16 +28,16 @@ library CliState  // The state of the cli tool
   1 roll 248 u,
   b>
 } : mkPaymentsStateIou
-// weOwe theyOwe iou missingAmount -> paymentsState
+// ( weOwe theyOwe iou missingAmount -- paymentsState )
 
 { 0 0 0 mkPaymentsState
-} : mkNewPaymentsState
-// -> paymentsState
+} : mkEmptyPaymentsState
+// ( -- paymentsState )
 
 { <s
   248 u@
 } : getPaymentsStateWeOwe
-// paymentsState -> weOwe
+// ( paymentsState -- weOwe )
 
 { <s
   248 u@+ nip
@@ -47,14 +47,14 @@ library CliState  // The state of the cli tool
 
 { <s ref@?
 } : getPaymentsStateIou
-// paymentsState -> (iou -1 | 0)
+// ( paymentsState -- (iou -1 | 0) )
 
 { <s
   248 u@+ nip
   248 u@+ nip
   248 u@
 } : getPaymentsStateMissingAmount
-// paymentsState -> missingAmount
+// ( paymentsState -- missingAmount )
 
 { <s <b swap
   248 u@+ -rot 248 u, swap
@@ -71,7 +71,7 @@ library CliState  // The state of the cli tool
   +
   swap setPaymentsStateMissingAmount
 } : addPaymentsStateMissingAmount
-// delta paymentsState -> paymentsState'
+// ( delta paymentsState -- paymentsState' )
 
 
 //
@@ -84,7 +84,7 @@ library CliState  // The state of the cli tool
   1 roll ref,
   b>
 } : mkCliState
-// b wc globalState paymentsState -> cliState
+// ( wc addr globalState paymentsState -- cliState )
 
 { <s
   8 i@+ 256 u@+
@@ -92,4 +92,47 @@ library CliState  // The state of the cli tool
   ref@+ swap
   s>
 } : parseCliState
-// cliState -> b wc globalState paymentsState
+// ( cliState -- wc addr globalState paymentsState )
+
+
+//
+// CliStateNice
+//
+
+// TODO: Rename this data type and some others
+
+// data CliStateNice = MkCliStateNice
+//   { cliState :: ^CliState
+//   , ourKeyName :: ^String
+//   , theirKeyName :: ^String
+//   }
+
+{ <b
+  3 roll ref,
+  2 roll $>s sr,
+  1 roll $>s sr,
+  b>
+} : mkCliStateNice
+// ( cliState ourPkName theirPkName -- cliStateNice )
+
+{ <s
+  ref@+
+  ref@+ dup sbits 8 / $@ swap
+  ref@+ dup sbits 8 / $@ swap
+  s>
+} : parseCliStateNice
+// ( cliStateNice -- cliState ourPkName theirPkName )
+
+{ addr>hex$' +".state"
+  dup file-exists? abort"State file for this channel already exists?!"
+  swap 2 boc+>B swap
+  dup ."Saving channel state to file `" type ."`" cr B>file
+} : saveCliStateNice
+// ( cliStateNice wc addr -- )
+
+{
+  addr>hex$ +".state"
+  file>B
+  B>boc
+} : loadCliStateNice
+// ( wc addr -- cliStateNice )
