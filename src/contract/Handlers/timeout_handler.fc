@@ -1,0 +1,37 @@
+cell handle_timeout(slice msg_src_addr,
+  cell globalState,
+  cell localState) impure {
+
+  var ls = localState.begin_parse();
+  var (_, stateTag) = ls.load_StateTag();
+
+  var (pk1, pk2, share1, share2, timeout, _, _)
+    = parseGlobalState(globalState);
+
+  if (stateTag == StateTags::Closing()) {
+    var (prevReqPk, openState, closeReq, prevTimestamp) =
+      parseStateClosing(ls);
+
+    var reqPk = msg_src_addr.addr2Pk(globalState, openState);
+
+    ;; timeout from other party, don't know what to do in this case
+    throw_if(33, ~ reqPk.pk_eq(prevReqPk));
+
+    var (reqPayout, _) = parseCloseReq(closeReq);
+    int reqShare = msg_src_addr.addr2Share(globalState, localState);
+
+    if ((now() - prevTimestamp) > timeout) {
+      proceedPayout(msg_src_addr, reqShare + reqPayout);
+      ;; translate to which state?
+      return localState;
+    } else {
+      ;; fine party, which initated TimeoutReq too early
+      ;; translate to which state???
+      return localState;
+    }
+  } else {
+    ;; transition not possible
+    throw(33);
+  }
+  return localState;
+}

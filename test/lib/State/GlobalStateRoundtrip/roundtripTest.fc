@@ -1,0 +1,14 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
+_ main(
+  slice pk1, slice pk2,
+  int share1, int share2,
+  int timeout,
+  int fineAmount,
+  int nonce) {
+  var c = mkGlobalState(pk1, pk2, share1, share2, timeout, fineAmount, nonce);
+  var res = parseGlobalState(c);
+  return res;
+}

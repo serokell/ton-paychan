@@ -1,0 +1,64 @@
+slice pk2Addr(slice pk, cell globalState, cell openState) {
+  var (pk1, pk2, _, _, _, _, _) = parseGlobalState(globalState);
+
+  var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
+  if (pk.pk_eq(pk1)) {
+    return addr1;
+  } elseif(pk.pk_eq(pk2)) {
+    return addr2;
+  } else {
+    ;; unknown PK
+    throw(33);
+  }
+  ;; unreachable code, but does not compile without it
+  return addr1;
+}
+
+slice addr2Pk(slice addr, cell globalState, cell openState) {
+  var (pk1, pk2, _, _, _, _, _) = parseGlobalState(globalState);
+
+  var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
+  if (addr.addr_eq(addr1)) {
+    return pk1;
+  } elseif (addr.addr_eq(addr2)) {
+    return pk2;
+  } else {
+    ;; unkonwn addr
+    throw(33);
+  }
+  ;; unreachable code again
+  return addr1;
+}
+
+int addr2Share(slice addr, cell globalState, cell openState) {
+  var (_, _, share1, share2, _, _, _) = parseGlobalState(globalState);
+
+  var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
+  if (addr.addr_eq(addr1)) {
+    return share1;
+  } elseif (addr.addr_eq(addr2)) {
+    return share2;
+  } else {
+    throw(33);
+  }
+  ;; unreachable code
+  return share1;
+}
+
+int pk2Share(slice pk, cell globalState) {
+  var (pk1, pk2, share1, share2, _, _, _) =
+    parseGlobalState(globalState);
+
+  if (pk.pk_eq(pk1)) {
+    return share1;
+  } elseif (pk.pk_eq(pk2)) {
+    return share2;
+  } else {
+    throw(33);
+  }
+  ;; unreachable code
+  return share1;
+}

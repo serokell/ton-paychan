@@ -1,13 +1,13 @@
 cell mkGlobalState(
-  int pk1, int pk2,
+  slice pk1, slice pk2,
   int share1, int share2,
   int timeout,
   int fineAmount,
   int nonce) {
 
   return begin_cell()
-    .store_uint(pk1, 256)
-    .store_uint(pk2, 256)
+    .store_pk(pk1)
+    .store_pk(pk2)
     .store_uint(share1, 120)
     .store_uint(share2, 120)
     .store_uint(timeout, 32)
