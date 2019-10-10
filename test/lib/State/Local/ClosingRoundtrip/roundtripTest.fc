@@ -1,0 +1,11 @@
+_ main(
+  slice requesterPk,
+  cell openState,
+  cell closeReq,
+  int timestamp) {
+
+  return parseStateClosing(
+    mkStateClosing(requesterPk, openState, closeReq, timestamp)
+      .begin_parse()
+  );
+}

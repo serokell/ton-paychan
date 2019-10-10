@@ -3,7 +3,7 @@
 ;; SPDX-License-Identifier: MPL-2.0
 
 () recv_external (slice in_msg) impure {
-  ;; do nothing
+  accept_message();
 }
 
 ;; slice is input in ton/crypto/smartcont/wallet-code.fc
@@ -31,6 +31,10 @@
     var closeReq = getCloseReqCell(in_msg);
     var newLocalState =
       handle_close(msg_src_addr, closeReq, globalState, localState);
+    putLocalState(newLocalState);
+  } elseif (op == ReqOp::Timeout()) {
+    var newLocalState =
+      handle_timeout(msg_src_addr, globalState, localState);
     putLocalState(newLocalState);
   } else {
     throw(33);

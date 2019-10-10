@@ -2,7 +2,7 @@ cell handle_close(
   slice msg_src_addr,
   cell closeReq,
   cell globalState,
-  cell localState) {
+  cell localState) impure {
 
   var ls = localState.begin_parse();
   var (_, stateTag) = ls.load_StateTag();
@@ -80,7 +80,8 @@ cell handle_close(
         payout2 = - share1;
       }
 
-      proceedPayout(addr1, share1 + payout1, addr2, share2 + payout2);
+      proceedPayout(addr1, share1 + payout1);
+      proceedPayout(addr2, share2 + payout2);
       ;; maybe make another state like `Terminated`
       return localState;
     }
