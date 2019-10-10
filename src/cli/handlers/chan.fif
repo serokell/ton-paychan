@@ -5,6 +5,7 @@
 library Handlers_new
 
 "Address.fif" include
+"TonUtil.fif" include
 
 "../CliState.fif" include
 
@@ -18,22 +19,58 @@ library Handlers_new
 
 ' cmdline_dispatch : cli_chan
 
+{
+  // stack: (globalState: Cell) (wc: Int)
+  swap
+  // stack: wc, state
+  "build/paychan.boc" file>B B>boc
+  swap
+  // wc, code, state
+  null // no libraries
+  // Libs{ x{ABACABADABACABA} drop x{AAAA} s>c public_lib x{1234} x{5678} |_ s>c public_lib }Libs
+  <b b{0011} s, 3 roll ref, rot ref, swap dict, b>  // create StateInit
+  // wc, stateInit
+  dup hashu
+  // wc, stateInit, hash
+  swap
+  // wc, hash, stateInit
+  // stack: (contractAddr: (int, int)) (stateInit: Cell)
+} : createStateInit
+
+{ // wc, addr, amount, init-cell, pk
+<b
+  b{01} s, // internalMsgTag ihr_disabled
+  b{1} s, // bounce
+  b{000100} s, // 00 - msgAddrNone 10 - msgAddrStd 0 - anycast = nothing
+  5 roll 5 roll addr,
+  3 roll Gram,
+  0 9 64 32 + + u, // 9 - empty dict \ ihr_fee = 0 \ fwd_fee = 0 \ created_lt = 0 \created_at = 0
+  b{11} s, // init = Just Right
+  2 roll ref, // init ref
+  b{10} s, // body = Just Left
+  0 32 u, // reqOp == 0
+  swap B, // pk
+b>
+} : createInitMessage
+
 { ."Creating a new payment channel..." cr
   cmdline_getarg  // name of our sk
   dup
   load-key-pair
-  // ( ourKeyName ourSk ourPk )
+  dup
+  // ( ourKeyName ourSk ourPk ourPk)
+  
 
   cmdline_getarg_int  // share our (grams)
 
   cmdline_getarg  // name of their pk
   dup 5 -roll
   load-key-public
-  // ( theirKeyName ourKeyName ourSk ourPk ourShare theirPk )
+  // ( theirKeyName ourKeyName ourSk ourPk ourPk ourShare theirPk )
 
   cmdline_getarg_int  // share their (grams)
   rot swap
-  // ( theirKeyName ourKeyName ourSk ourPk theirPk ourShare theirShare )
+  // ( theirKeyName ourKeyName ourSk ourPk ourPk theirPk ourShare theirShare )
 
   cmdline_getarg_int  // timeout (seconds)
 
@@ -42,9 +79,25 @@ library Handlers_new
   now  // nonce
 
   mkGlobalState
-  // ( theirKeyName ourKeyName ourSk globalState )
+  // ( theirKeyName ourKeyName ourSk ourPk globalState )
 
-  dup dup paychan-addr
+  dup dup
+  0 // sample wc
+  createStateInit
+  // theirKeyname ourKeyName ourSk ourPk globalState globalState wc addr stateInit
+  -rot 2dup
+  4 roll
+  // theirKeyname ourKeyName ourSk ourPk globalState globalState wc addr wc addr stateInit
+  200000 // ourShare in grams
+  swap
+  // theirKeyname ourKeyName ourSk ourPk globalState globalState wc addr wc addr grams stateInit
+  8 roll
+  // theirKeyname ourKeyName ourSk globalState globalState wc addr wc addr grams stateInit ourPk
+  createInitMessage
+
+  // theirKeyname ourKeyName ourSk globalState globalState wc addr cell
+  2 boc+>B "build/init-msg.boc" B>file // wrote internal init message
+
   // ( theirKeyname ourKeyName ourSk globalState globalState wc addr )
   2dup 5 -roll 5 -roll
   // ( theirKeyname ourKeyName ourSk wc addr globalState globalState wc addr )
