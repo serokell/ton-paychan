@@ -15,6 +15,12 @@ library Handlers_new
 } : _saveJoinRequest
 // ( globalState -- )
 
+{ "paychan.join"
+  dup ."Loading join request from file `" type ."`" cr file>B
+  B>boc
+} : _loadJoinRequest
+// ( -- globalState )
+
 
 ' cmdline_dispatch : cli_chan
 
@@ -53,8 +59,6 @@ library Handlers_new
 
   6 roll 6 roll swap mkCliStateNice
   // ( ourSk wc addr globalState cliStateNice )
-  3 roll 3 roll 2dup 5 -roll 5 -roll
-  // ( ourSk wc addr globalState cliStateNice wc addr )
   saveCliStateNice
   // ( ourSk wc addr globalState )
 
@@ -64,3 +68,22 @@ library Handlers_new
   // TODO[gpevnev]: output the deployment msg
   // cmdline_getarg_int  // extra for fuel (grams)
 } :cmdline cli_chan_new
+
+{ ."Joining a channel..." cr
+  cmdline_getarg dup load-key-pair nip
+  cmdline_getarg dup load-key-public
+  _loadJoinRequest
+  // ( ourKeyName ourPk theirKeyname theirPk globalState )
+
+  dup getGlobalStatePk2 4 roll B=
+    { fail"Our public key does not match the one in the request" } ifnot
+  dup getGlobalStatePk1 2 roll B=
+    { fail"Their public key does not match the one in the request" } ifnot
+  // ( ourKeyName theirKeyName globalState )
+
+  dup paychan-addr rot mkEmptyPaymentsState mkCliState
+  // ( ourKeyName theirKeyName cliState )
+
+  swap rot swap mkCliStateNice
+  saveCliStateNice
+} :cmdline cli_chan_join

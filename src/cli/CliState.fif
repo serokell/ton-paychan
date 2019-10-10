@@ -94,6 +94,11 @@ library CliState  // The state of the cli tool
 } : parseCliState
 // ( cliState -- wc addr globalState paymentsState )
 
+{ <s
+  8 i@+ 256 u@
+} : getCliStateAddr
+// ( cliState -- wc addr )
+
 
 //
 // CliStateNice
@@ -116,19 +121,24 @@ library CliState  // The state of the cli tool
 // ( cliState ourPkName theirPkName -- cliStateNice )
 
 { <s
-  ref@+
+  ref@+ swap
   ref@+ dup sbits 8 / $@ swap
   ref@+ dup sbits 8 / $@ swap
   s>
 } : parseCliStateNice
 // ( cliStateNice -- cliState ourPkName theirPkName )
 
-{ addr>hex$' +".state"
+{ <s
+  ref@
+} : getCliStateNiceCliState
+// ( cliStateNice -- cliState )
+
+{ dup getCliStateNiceCliState getCliStateAddr addr>hex$' +".state"
   dup file-exists? abort"State file for this channel already exists?!"
   swap 2 boc+>B swap
   dup ."Saving channel state to file `" type ."`" cr B>file
 } : saveCliStateNice
-// ( cliStateNice wc addr -- )
+// ( cliStateNice -- )
 
 {
   addr>hex$ +".state"

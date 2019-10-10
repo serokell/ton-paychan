@@ -32,3 +32,14 @@ library GlobalState  // Payment channel global (immutable) state
   s>
 } : parseGlobalState
 // ( globalState -- pk1 pk2 share1 share2 timeout fine nonce )
+
+{ <s
+  32 B@
+} : getGlobalStatePk1
+// ( globalState -- pk1 )
+
+{ <s
+  32 B@+ nip
+  32 B@
+} : getGlobalStatePk2
+// ( globalState -- pk2 )
