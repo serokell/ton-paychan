@@ -1,0 +1,3 @@
+int ReqOp::SimpleTransfer() { return 0; }
+int ReqOp::Close()          { return 1; }
+int ReqOp::Timeout()        { return 2; }

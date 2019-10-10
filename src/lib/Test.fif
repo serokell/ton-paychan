@@ -10,10 +10,28 @@ library Test  // Fift testing framework
   0 'nop
 } :: @tests
 
+{ = not abort"Not equal" } : assertIntEq
+
+{
+  hashu
+  swap
+  hashu
+  assertIntEq
+} : assertCellEq
+
+
+{
+  s>c swap s>c
+  assertCellEq
+} : assertSliceEq
+
+
+
 { "  - " type
   bl word type
   "..." type
   execute
+  depth 0 = not abort"Stack not empty after test"
   " ok" type cr
   0 'nop
 } :: @test

@@ -14,13 +14,10 @@ cell handle_simple_transfer(
 
    if (stateTag == StateTags::WaitingBoth()) {
      ;; WaitingBoth -> WaitingOne s_addr pk
-     if (msg_pk.pk_eq(pk1)) {
-       throw_if(33, share1 != msg_value);
-     }
+     var requesterShare = msg_pk.pk2Share(globalState);
 
-     if (msg_pk.pk_eq(pk2)) {
-       throw_if(33, share2 != msg_value);
-     }
+     ;; supplied not enough
+     throw_if(33, requesterShare != msg_value);
 
      return mkStateWaitingOne(msg_src_addr, msg_pk);
    } elseif (stateTag == StateTags::WaitingOne()) {

@@ -9,6 +9,7 @@
 ton_src = ../ton
 
 fift_lib = $(ton_src)/crypto/fift/lib
+fift_compiler = ../ton/build/crypto/fift
 func_lib = $(ton_src)/crypto/smartcont/stdlib.fc
 func_compiler = func
 
@@ -19,13 +20,23 @@ export FIFTPATH:=src/cli:src/lib:$(fift_lib)
 all: compile
 
 func_opts = -P -O0
-paychan_func_src = src/lib/Sign.fc src/lib/Iou.fc src/lib/Util.fc src/lib/State/Local/StateTags.fc src/lib/State/Local/WaitingBoth.fc src/lib/State/Local/WaitingOne.fc src/lib/State/Local/Open.fc src/lib/State/Local/Closing.fc src/lib/State/GlobalState.fc src/lib/request/ReqOps.fc src/lib/Request/Close.fc src/lib/State/State.fc src/lib/Payout.fc src/contract/Handlers/simple_transfer_handler.fc src/contract/Handlers/close_handler.fc src/contract/paychan.fc
-paychan_out = build/paychan.fif
+paychan_func_src = src/lib/Sign.fc src/lib/Iou.fc src/lib/Util.fc src/lib/State/Local/StateTags.fc src/lib/State/Local/WaitingBoth.fc src/lib/State/Local/WaitingOne.fc src/lib/State/Local/Open.fc src/lib/State/Local/Closing.fc src/lib/State/GlobalState.fc src/lib/State/Util.fc src/lib/request/ReqOps.fc src/lib/Request/Close.fc src/lib/State/State.fc src/lib/Payout.fc src/contract/Handlers/simple_transfer_handler.fc src/contract/Handlers/close_handler.fc src/contract/Handlers/timeout_handler.fc src/contract/paychan.fc
 
-compile : $(paychan_out)
+compile: build/paychan.boc
 
-$(paychan_out): $(paychan_func_src)
+build/paychan.fif: $(paychan_func_src)
 	@mkdir -p $(@D)
-	$(func_compiler) $(func_opts) -o$(paychan_out) $(func_lib) $(paychan_func_src)
+	$(func_compiler) $(func_opts) -o$@ $(func_lib) $^
+
+build/paychan_write_boc.fif: $(paychan_func_src)
+	@mkdir -p $(@D)
+	$(func_compiler) $(func_opts) -Wbuild/paychan.boc -o$@ $(func_lib) $(paychan_func_src)
+
+build/paychan.boc: build/paychan_write_boc.fif
+	@mkdir -p $(@D)
+	$(fift_compiler) -I$(fift_lib) $^
 
 include test/Makefile
+
+clean:
+	rm -rf build

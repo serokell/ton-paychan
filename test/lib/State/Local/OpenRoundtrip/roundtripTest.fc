@@ -1,0 +1,5 @@
+_ main(slice addr1, slice addr2) {
+  var c = mkStateOpen(addr1, addr2);
+  var openState = getOpenState(c);
+  return parseOpenState(openState.begin_parse());
+}

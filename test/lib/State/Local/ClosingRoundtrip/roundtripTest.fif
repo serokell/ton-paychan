@@ -1,0 +1,25 @@
+"Test.fif" include
+"Asm.fif" include
+
+@tests State/Local/Open.fc <-> Roundtrip
+
+"roundtripTest.asm.gen" include constant contract
+
+{ <b 12345 256 u, b> <s } : requesterPk
+{ <b 5678 256 u, b> }     : closeReq
+{ <b 456 200 u, b> }      : openState
+167 constant                timestamp 
+
+
+{
+  requesterPk
+  openState
+  closeReq
+  timestamp
+  contract <s
+  runvmdict 0= not abort"TVM died unexpectedly"
+  timestamp   assertIntEq
+  closeReq    assertCellEq
+  openState   assertCellEq
+  requesterPk assertSliceEq
+} @test closingRoundtrip

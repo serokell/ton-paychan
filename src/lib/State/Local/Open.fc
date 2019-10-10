@@ -21,6 +21,5 @@ cell mkStateOpen(slice addr1, slice addr2) {
 }
 
 (slice, slice) parseOpenState(slice s) {
-  throw_if(33, s~load_StateTag() != StateTags::Open());
   return (s~load_msg_addr(), s~load_msg_addr());
 }
