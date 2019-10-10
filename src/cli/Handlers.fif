@@ -1,0 +1,63 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+"handlers/key.fif" include
+"handlers/chan.fif" include
+"handlers/pay.fif" include
+"handlers/receive.fif" include
+
+{ ."Usage:" cr
+  ."  " $0 type
+    ." [ key gen"
+    ." | chan [new | join | close | info ]"
+    ." | pay"
+    ." | receive"
+    ." ]" cr
+  cr
+  ."  Generate a new key pair:" cr
+    ."    key gen"
+    ." <key name>"
+    cr
+    ."  (Writes keypair to `<key name>.sk` and `<key name>.pk`)" cr
+  cr
+  ."  Create a new payment channel:" cr
+    ."    chan new"
+    ." <our key name>"
+    ." <our share>"
+    ." <their key name>"
+    ." <their share>"
+    ." <timeout>"
+    ." <fine amount>"
+    // ." <extra fuel>"  // TODO[gpevnev] Uncomment me
+    cr
+    ."  (Writes joining request to `paychan.join`)" cr
+  cr
+  ."  Join a payment channel created by someone else:" cr
+    ."    chan join <our key name> <their key name>"
+    cr
+    ."  (Reads joining request from `paychan.join`)" cr
+  cr
+  ."  Request a payment channel to close:" cr
+    ."    chan close"
+    ." <channel address>"
+    cr
+  cr
+  ."  Show information about a channel we created or joined:" cr
+    ."    chan info"
+    ." <channel address>"
+    cr
+  cr
+  ."  Make a payment through a payment channel:" cr
+    ."    pay"
+    ." <channel address>"
+    ." <amount>"
+    cr
+    ."  (Writes off-chain transaction to `paychan.pay`)" cr
+  cr
+  ."  Receive a payment through a payment channel:" cr
+    ."    receive"
+    ." <channel address>"
+    cr
+    ."  (Reads off-chain transaction from `paychan.pay`)" cr
+} constant handlers_usage

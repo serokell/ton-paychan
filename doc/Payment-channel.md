@@ -113,13 +113,9 @@ Each party shall maintain their own view of the state of the payment protocol:
 
 ```
 data CliState = MkCliState
-  { cliConfig :: CliConfig
-  , paymentsState :: PaymentsState
-  }
-
-data ChanConfig = MkCliConfig
   { chanAddr :: ContractAddress
   , chanGlobalState :: GlobalState  -- ^ See below.
+  , paymentsState :: PaymentsState
   }
 
 data PaymentsState = MkPaymentsState
@@ -178,7 +174,7 @@ data GlobalState = MkGlobalState
   { parties :: (PublicKey, PublicKey)
   , shares :: (UInt120, UInt120)
   , timeout :: UInt32
-  , fineAmount :: Int120
+  , fineAmount :: UInt120
   , nonce :: UInt64  -- ^ Set to deployment time-stamp to change the hash
   }
 

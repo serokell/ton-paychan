@@ -1,0 +1,95 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library CliState  // The state of the cli tool
+
+
+"TonUtil.fif" include
+
+"State/GlobalState.fif" include
+
+//
+// PaymentsState
+//
+
+{ <b
+  3 roll 248 u,
+  2 roll 248 u,
+  1 roll 248 u,
+  b>
+} : mkPaymentsState
+// weOwe theyOwe missingAmount -> paymentsState
+
+{ <b
+  4 roll 248 u,
+  3 roll 248 u,
+  2 roll ref,
+  1 roll 248 u,
+  b>
+} : mkPaymentsStateIou
+// weOwe theyOwe iou missingAmount -> paymentsState
+
+{ 0 0 0 mkPaymentsState
+} : mkNewPaymentsState
+// -> paymentsState
+
+{ <s
+  248 u@
+} : getPaymentsStateWeOwe
+// paymentsState -> weOwe
+
+{ <s
+  248 u@+ nip
+  248 u@
+} : getPaymentsStateTheyOwe
+// paymentsState -> theyOwe
+
+{ <s ref@?
+} : getPaymentsStateIou
+// paymentsState -> (iou -1 | 0)
+
+{ <s
+  248 u@+ nip
+  248 u@+ nip
+  248 u@
+} : getPaymentsStateMissingAmount
+// paymentsState -> missingAmount
+
+{ <s <b swap
+  248 u@+ -rot 248 u, swap
+  248 u@+ -rot 248 u,
+  rot 248 u, swap
+  ref@? { ref, } if
+  b>
+} : setPaymentsStateMissingAmount
+// missingAmount paymentsState -> paymentsState'
+
+{ dup
+  getPaymentsStateMissingAmount
+  rot
+  +
+  swap setPaymentsStateMissingAmount
+} : addPaymentsStateMissingAmount
+// delta paymentsState -> paymentsState'
+
+
+//
+// CliState
+//
+
+{ <b
+  4 roll 4 roll addr,
+  2 roll ref,
+  1 roll ref,
+  b>
+} : mkCliState
+// b wc globalState paymentsState -> cliState
+
+{ <s
+  8 i@+ 256 u@+
+  ref@+ swap
+  ref@+ swap
+  s>
+} : parseCliState
+// cliState -> b wc globalState paymentsState

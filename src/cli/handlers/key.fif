@@ -1,0 +1,13 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library Handlers_key
+
+"KeyUtil.fif" include
+
+' cmdline_dispatch : cli_key
+
+{ cmdline_getarg  // name of sk file
+  gen-key-pair
+} dup : cli_key_gen : cli_keygen
