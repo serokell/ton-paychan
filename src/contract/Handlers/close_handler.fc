@@ -9,7 +9,7 @@ int isPayoutImpossible(int reqShare, int reqPayout, int otherShare) {
     );
 }
 
-cell createStateClosing(slice reqPk, cell localState, cell closeReq) {
+cell createStateClosing(int reqPk, cell localState, cell closeReq) {
    return mkStateClosing(
      reqPk,
      getOpenState(localState),

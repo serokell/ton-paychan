@@ -3,7 +3,7 @@
 ;; SPDX-License-Identifier: MPL-2.0
 
 cell mkGlobalState(
-  slice pk1, slice pk2,
+  int pk1, int pk2,
   int share1, int share2,
   int timeout,
   int fineAmount,

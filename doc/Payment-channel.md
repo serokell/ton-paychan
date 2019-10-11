@@ -205,11 +205,13 @@ Users can make the following requests:
 
 ```haskell
 data Request
+  | MkRequestSMT PK (Signed (PK, Addr))
   | MkRequestClose CloseRequest
   | MkRequestDispute DisputeRequest
   | MkRequestDisputeOk
   | MkRequestDisputeBad DisputeBadRequest
   | MkRequestTimeout
+
 
 data CloseRequest = MkCloseRequest
   { payout :: Int121  -- ^ Requested payout
