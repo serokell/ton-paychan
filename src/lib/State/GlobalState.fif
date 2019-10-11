@@ -43,3 +43,10 @@ library GlobalState  // Payment channel global (immutable) state
   32 B@
 } : getGlobalStatePk2
 // ( globalState -- pk2 )
+
+{ <s
+  32 B@+ nip
+  32 B@+ nip
+  121 i@
+} : getGlobalStateShare1
+// ( globalState -- pk2 )

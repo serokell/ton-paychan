@@ -6,6 +6,9 @@ library Address  // Smart-contract address utilities
 
 "String.fif" include
 
+{ 8 i@+ 256 u@+
+} : addr@+
+// ( s -- wc addr s )
 
 // TODO[gpevnev]: Implement me
 { drop 0 0xDABFACE

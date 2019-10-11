@@ -10,7 +10,7 @@
 { ."Usage:" cr
   ."  " $0 type
     ." [ key gen"
-    ." | chan [new | join | close | info ]"
+    ." | chan [ new | join | close | info ]"
     ." | pay"
     ." | receive"
     ." ]" cr
