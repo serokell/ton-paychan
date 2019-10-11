@@ -4,21 +4,36 @@
 
 library Handlers_new
 
+"Address.fif" include
+
 "../CliState.fif" include
+
+
+{ 2 boc+>B
+  "paychan.join"
+  dup ."Saving join request to file `" type ."`" cr B>file
+} : _saveJoinRequest
+// ( globalState -- )
+
 
 ' cmdline_dispatch : cli_chan
 
 { ."Creating a new payment channel..." cr
-  cmdline_getarg  // name of our sk file
+  cmdline_getarg  // name of our sk
+  dup
   load-key-pair
+  // ( ourKeyName ourSk ourPk )
 
   cmdline_getarg_int  // share our (grams)
 
-  cmdline_getarg  // name of their pk file
+  cmdline_getarg  // name of their pk
+  dup 5 -roll
   load-key-public
+  // ( theirKeyName ourKeyName ourSk ourPk ourShare theirPk )
 
   cmdline_getarg_int  // share their (grams)
   rot swap
+  // ( theirKeyName ourKeyName ourSk ourPk theirPk ourShare theirShare )
 
   cmdline_getarg_int  // timeout (seconds)
 
@@ -27,9 +42,25 @@ library Handlers_new
   now  // nonce
 
   mkGlobalState
+  // ( theirKeyName ourKeyName ourSk globalState )
+
+  dup dup paychan-addr
+  // ( theirKeyname ourKeyName ourSk globalState globalState wc addr )
+  2dup 5 -roll 5 -roll
+  // ( theirKeyname ourKeyName ourSk wc addr globalState globalState wc addr )
+  rot mkEmptyPaymentsState mkCliState
+  // ( theirKeyName ourKeyName ourSk wc addr globalState cliState )
+
+  6 roll 6 roll swap mkCliStateNice
+  // ( ourSk wc addr globalState cliStateNice )
+  3 roll 3 roll 2dup 5 -roll 5 -roll
+  // ( ourSk wc addr globalState cliStateNice wc addr )
+  saveCliStateNice
+  // ( ourSk wc addr globalState )
+
+  dup _saveJoinRequest
+  // ( ourSk wc addr globalState )
 
   // TODO[gpevnev]: output the deployment msg
-  // TODO[kirelagin]: save cli state, create joining request
-  // stack = sk globalState
   // cmdline_getarg_int  // extra for fuel (grams)
 } :cmdline cli_chan_new

@@ -1,0 +1,23 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library Address  // Smart-contract address utilities
+
+
+// TODO[gpevnev]: Implement me
+{ drop 0 0xDABFACE
+} : paychan-addr
+// ( globalConfig -- wc addr )
+
+{ swap (.) +":"
+  swap 64 (0x.) $+
+} : addr>hex$
+// ( wc addr - str )
+
+// Like `addr>hex$` but uses `-` instead of `:` so that it can be
+// used as a file name on Windows.
+{ swap (.) +"-"
+  swap 64 (0x.) $+
+} : addr>hex$'
+// ( wc addr - str )

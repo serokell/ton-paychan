@@ -7,12 +7,12 @@
 
 @tests CliState.fif
 
-{ mkNewPaymentsState
+{ mkEmptyPaymentsState
   dup getPaymentsStateWeOwe 0 = not abort"Wrong weOwe"
   dup getPaymentsStateTheyOwe 0 = not abort"Wrong theyOwe"
   dup getPaymentsStateMissingAmount 0 = not abort"Wrong missingAmount"
       getPaymentsStateIou abort"Should not have iou"
-} @test mkNewPaymentsState
+} @test mkEmptyPaymentsState
 
 { 123 456 <b 10 32 i, b> 788 mkPaymentsStateIou
   111 swap addPaymentsStateMissingAmount
