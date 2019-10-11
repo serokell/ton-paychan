@@ -1,0 +1,13 @@
+;; MkStateTerminated
+
+cell mkStateTerminated() {
+  return begin_cell()
+    .store_StateTag(StateTags::Terminated())
+    .end_cell();
+}
+
+
+cell terminateContract() impure {
+  ;; TODO: send all remaining funds somewhere
+  return mkStateTerminated();
+}

@@ -9,7 +9,10 @@ cell mkStateWaitingOne(slice addr, slice pk) {
 
 ;; addr, pk
 (slice, slice) parseStateWaitingOne(slice s) {
-  throw_if(1019, s~load_StateTag() != StateTags::WaitingOne());
+  throw_when(
+    Prs::WaitingOne(),
+    s~load_StateTag() != StateTags::WaitingOne()
+    );
   var addr = s~load_msg_addr();
   var pk = s~load_pk();
   return (addr, pk);

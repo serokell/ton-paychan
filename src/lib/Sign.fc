@@ -18,6 +18,7 @@ cell getSignedData(cell signed) {
 cell checkSigned(cell signed, int pk) {
   slice signature = begin_parse(signed);
   cell c = preload_ref(signature);
+  ;; TODO: assign code
   throw_unless(1, check_signature(cell_hash(c), signature, pk));
   return c;
 }

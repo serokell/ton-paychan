@@ -7,7 +7,7 @@ cell mkOpenState(slice addr1, slice addr2) {
 
 cell getOpenState(cell stateOpen) {
   var s = stateOpen.begin_parse();
-  throw_if(1018, s~load_StateTag() != StateTags::Open());
+  throw_when(Prs::StateOpen(), s~load_StateTag() != StateTags::Open());
   return s~load_ref();
 }
 

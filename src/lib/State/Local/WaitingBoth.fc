@@ -5,5 +5,3 @@ cell mkStateWaitingBoth() {
     .store_StateTag(StateTags::WaitingBoth())
     .end_cell();
 }
-
-(slice, ()) load_StateWaitingBoth(slice s) { return (s, ()); }
