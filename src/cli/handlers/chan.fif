@@ -9,17 +9,19 @@ library Handlers_new
 "../CliState.fif" include
 
 
-{ 2 boc+>B
+{ <b swap ref, -rot addr, b>
+  2 boc+>B
   "paychan.join"
   dup ."Saving join request to file `" type ."`" cr B>file
 } : _saveJoinRequest
-// ( globalState -- )
+// ( wc addr globalState -- )
 
 { "paychan.join"
   dup ."Loading join request from file `" type ."`" cr file>B
   B>boc
+  <s addr@+ ref@+ swap s>
 } : _loadJoinRequest
-// ( -- globalState )
+// ( -- wc addr globalState )
 
 
 ' cmdline_dispatch : cli_chan
@@ -62,8 +64,8 @@ library Handlers_new
   saveCliStateNice
   // ( ourSk wc addr globalState )
 
-  dup _saveJoinRequest
-  // ( ourSk wc addr globalState )
+  _saveJoinRequest
+  // ( ourSk )
 
   // TODO[gpevnev]: output the deployment msg
   // cmdline_getarg_int  // extra for fuel (grams)
@@ -73,15 +75,15 @@ library Handlers_new
   cmdline_getarg dup load-key-pair nip
   cmdline_getarg dup load-key-public
   _loadJoinRequest
-  // ( ourKeyName ourPk theirKeyname theirPk globalState )
+  // ( ourKeyName ourPk theirKeyname theirPk wc addr globalState )
 
-  dup getGlobalStatePk2 4 roll B=
+  dup getGlobalStatePk2 6 roll B=
     { fail"Our public key does not match the one in the request" } ifnot
-  dup getGlobalStatePk1 2 roll B=
+  dup getGlobalStatePk1 4 roll B=
     { fail"Their public key does not match the one in the request" } ifnot
-  // ( ourKeyName theirKeyName globalState )
+  // ( ourKeyName theirKeyName wc addr globalState )
 
-  dup paychan-addr rot mkEmptyPaymentsState mkCliState
+  mkEmptyPaymentsState mkCliState
   // ( ourKeyName theirKeyName cliState )
 
   swap rot swap mkCliStateNice
