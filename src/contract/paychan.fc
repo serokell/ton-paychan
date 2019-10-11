@@ -16,7 +16,7 @@
   }
 
   ;; need comments in simple transfer message
-  throw_if(33, in_msg.slice_empty?());
+  throw_if(1001, in_msg.slice_empty?());
 
   var msg_src_addr = cs~load_msg_addr();
   var op = in_msg~load_uint(32);
@@ -37,6 +37,6 @@
       handle_timeout(msg_src_addr, globalState, localState);
     putLocalState(newLocalState);
   } else {
-    throw(33);
+    throw(1002);
   }
 }

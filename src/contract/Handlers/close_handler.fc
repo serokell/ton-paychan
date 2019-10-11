@@ -31,12 +31,12 @@ cell handle_close(
       otherShare = share1;
     } else {
       ;; unknown participant
-      throw(33);
+      throw(1007);
     }
 
     if ((otherShare < payout) & ((requesterShare + payout)) < 0) {
       ;; payout impossible
-      throw(33);
+      throw(1008);
     }
 
     cell newLocalState =
@@ -68,7 +68,7 @@ cell handle_close(
         payout2 = payout;
       } else {
         ;; unknown participant
-        throw(33);
+        throw(1009);
       }
 
       ;; didn't get exact spect how to fine if this happens?
@@ -86,7 +86,7 @@ cell handle_close(
       return localState;
     }
   } else {
-    throw(33);
+    throw(1010);
   }
   return localState;
 }
