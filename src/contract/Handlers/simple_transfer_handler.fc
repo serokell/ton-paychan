@@ -2,7 +2,7 @@
 cell handle_simple_transfer(
    slice msg_src_addr,
    int msg_value,
-   slice msg_pk,
+   int msg_pk,
    cell globalState,
    cell localState) {
 

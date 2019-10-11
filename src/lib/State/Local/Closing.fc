@@ -2,7 +2,7 @@
 
 
 cell mkStateClosing(
-  slice requesterPk,
+  int requesterPk,
   cell openState,
   cell closeReq,
   int timestamp) {
@@ -16,7 +16,7 @@ cell mkStateClosing(
     .end_cell();
 }
 
-(slice, cell, cell, int) parseStateClosing(slice s) {
+(int, cell, cell, int) parseStateClosing(slice s) {
   throw_when(
     Prs::StateClosing(),
     s~load_StateTag() != StateTags::Closing()

@@ -1,5 +1,5 @@
 ;; MkStateWaitingOne
-cell mkStateWaitingOne(slice addr, slice pk) {
+cell mkStateWaitingOne(slice addr, int pk) {
   return begin_cell()
     .store_StateTag(StateTags::WaitingOne())
     .store_slice(addr)
@@ -8,7 +8,7 @@ cell mkStateWaitingOne(slice addr, slice pk) {
 }
 
 ;; addr, pk
-(slice, slice) parseStateWaitingOne(slice s) {
+(slice, int) parseStateWaitingOne(slice s) {
   throw_when(
     Prs::WaitingOne(),
     s~load_StateTag() != StateTags::WaitingOne()

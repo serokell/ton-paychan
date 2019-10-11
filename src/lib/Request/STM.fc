@@ -1,0 +1,16 @@
+;; msg -> pk
+int parseSMT(slice msg) {
+  var pk = msg~load_pk();
+  var signature = msg~load_bits(512);
+  var pkAndAddrCell = msg~load_ref();
+  var s = pkAndAddrCell.begin_parse();
+  var (pk_from_cell, wc, addr) = (s~load_pk(), s~load_int(8), s~load_uint(256));
+
+  var (myWc, myAddr) = parse_std_addr(my_address());
+
+  throw_unless(35, check_signature(cell_hash(pkAndAddrCell), signature, pk));
+  throw_unless(33, pk_from_cell == pk);
+  throw_unless(34, (myWc == wc) & (myAddr == addr));
+
+  return pk;
+}
