@@ -1,3 +1,40 @@
+int isPayoutImpossible(int reqShare, int reqPayout, int otherShare) {
+  return (otherShare < reqPayout) | (reqShare < - reqPayout);
+}
+
+() throw_if_payoutImpossible(int reqShare, int reqPayout, int otherShare) impure {
+  throw_when(
+    Close::PayoutImpossible(),
+    isPayoutImpossible(reqShare, reqPayout, otherShare)
+    );
+}
+
+cell createStateClosing(slice reqPk, cell localState, cell closeReq) {
+   return mkStateClosing(
+     reqPk,
+     getOpenState(localState),
+     closeReq,
+     now()
+     );
+}
+
+cell payoutMatches(
+  slice addr1, slice addr2,
+  int payout1, int payout2,
+  int share1, int share2) impure {
+
+  if (- payout1 > share2) {
+    payout1 = - share2;
+  }
+
+  if (- payout2 > share1) {
+    payout2 = - share1;
+  }
+
+  proceedPayout2(addr1, share1 + payout1, addr2, share2 + payout2);
+  return terminateContract();
+}
+
 cell handle_close(
   slice msg_src_addr,
   cell closeReq,
@@ -15,78 +52,68 @@ cell handle_close(
 
   if (stateTag == StateTags::Open()) {
     ;; Open -> Closing
-    
+
     var (addr1, addr2) = parseOpenState(ls);
-    
-    int requesterShare = share1;
-    slice requesterPk = pk1;
-    int otherShare = share2;
+
     if (msg_src_addr.slice_eq(addr1)) {
-      requesterShare = share1;
-      requesterPk = pk1;
-      otherShare = share2;
+      ;; current msg from party1
+      ;; reqShare = share1;
+      ;; reqPk = pk1;
+      ;; otherShare = share2;
+      throw_if_payoutImpossible(share1, payout, share2);
+      return createStateClosing(pk1, localState, closeReq);
     } elseif (msg_src_addr.slice_eq(addr2)) {
-      requesterShare = share2;
-      requesterPk = pk2;
-      otherShare = share1;
+      ;; current msg from party2
+      ;; reqShare = share2;
+      ;; reqPk = pk2;
+      ;; otherShare = share1;
+      throw_if_payoutImpossible(share2, payout, share1);
+      return createStateClosing(pk2, localState, closeReq);
     } else {
       ;; unknown participant
-      throw(1007);
+      throw(Close::UnknownParty1());
+      return unreachableReturn();
     }
-
-    if ((otherShare < payout) & ((requesterShare + payout)) < 0) {
-      ;; payout impossible
-      throw(1008);
-    }
-
-    cell newLocalState =
-      mkStateClosing(
-        requesterPk,
-        getOpenState(localState),
-        closeReq,
-        now()
-      );
-
-    return newLocalState;
   } elseif(stateTag == StateTags::Closing()) {
     ;; Closing -> ???
     var (prevReqPk, openState, prevCloseReq, prevTimestamp) =
       parseStateClosing(ls);
 
-    ;; check that payout value provided makes sensee
-
     var (prevPayout, prevIou) = parseCloseReq(prevCloseReq);
     if (payout + prevPayout == 0) {
       var (addr1, addr2) = parseOpenState(openState.begin_parse());
-      var payout1 = prevPayout;
-      var payout2 = payout;
+
       if (msg_src_addr.slice_eq(addr1)) {
-        payout1 = payout;
-        payout2 = prevPayout;
+        ;; current msg from party1
+        ;; payout1 = payout;
+        ;; payout2 = prevPayout;
+        return payoutMatches(
+          addr1, addr2,
+          payout, prevPayout,
+          share1, share2
+          );
       } elseif (msg_src_addr.slice_eq(addr2)) {
-        payout1 = prevPayout;
-        payout2 = payout;
+        ;; current msg from party2
+        ;; payout1 = prevPayout;
+        ;; payout2 = payout;
+        return payoutMatches(
+          addr1, addr2,
+          prevPayout, payout,
+          share1, share2
+        );
       } else {
         ;; unknown participant
-        throw(1009);
+        throw(Close::UnknownParty2());
+        return unreachableReturn();
       }
-
-      ;; didn't get exact spect how to fine if this happens?
-      if (- payout1 > share2) {
-        payout1 = - share2;
-      }
-
-      if (- payout2 > share1) {
-        payout2 = - share1;
-      }
-
-      proceedPayout(addr1, share1 + payout1);
-      proceedPayout(addr2, share2 + payout2);
-      ;; maybe make another state like `Terminated`
-      return localState;
+    } else {
+      ;; TODO: resolve dispute
+      throw(33);
+      return unreachableReturn();
     }
   } else {
-    throw(1010);
+    ;; Unknown state transition
+    throw(Close::InvalidState());
+    return unreachableReturn();
   }
-  return localState;
 }

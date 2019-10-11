@@ -1,4 +1,5 @@
-cell handle_timeout(slice msg_src_addr,
+cell handle_timeout(
+  slice msg_src_addr,
   cell globalState,
   cell localState) impure {
 
@@ -14,24 +15,37 @@ cell handle_timeout(slice msg_src_addr,
 
     var reqPk = msg_src_addr.addr2Pk(globalState, openState);
 
-    ;; timeout from other party, don't know what to do in this case
-    throw_if(1011, ~ reqPk.pk_eq(prevReqPk));
+    ;; timeout from other party
+    throw_when(Timeout::WrongParty(), ~ reqPk.pk_eq(prevReqPk));
+
+    var (addr1, addr2) = parseOpenState(openState.begin_parse());
 
     var (reqPayout, _) = parseCloseReq(closeReq);
-    int reqShare = msg_src_addr.addr2Share(globalState, localState);
-
     if ((now() - prevTimestamp) > timeout) {
-      proceedPayout(msg_src_addr, reqShare + reqPayout);
-      ;; translate to which state?
-      return localState;
+      if (msg_src_addr.slice_eq(addr1)) {
+        proceedPayout2(
+          addr1, share1 + reqPayout,
+          addr2,  share2 - reqPayout
+          );
+        return terminateContract();
+      } elseif (msg_src_addr.slice_eq(addr2)) {
+        proceedPayout2(
+          addr1, share1 - reqPayout,
+          addr2, share2 + reqPayout
+          );
+        return terminateContract();
+      } else {
+        throw(Timeout::UnknownAddress());
+        return unreachableReturn();
+      }
     } else {
-      ;; fine party, which initated TimeoutReq too early
-      ;; translate to which state???
-      return localState;
+      ;; timeout initiated too early
+      throw(Timeout::TooEarly());
+      return unreachableReturn();
     }
   } else {
     ;; transition not possible
-    throw(1012);
+    throw(Timeout::InvalidState());
+    return unreachableReturn();
   }
-  return localState;
 }

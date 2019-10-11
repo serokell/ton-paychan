@@ -20,7 +20,7 @@ export FIFTPATH:=src/cli:src/lib:$(fift_lib)
 all: compile
 
 func_opts = -P -O0
-paychan_func_src = src/lib/Sign.fc src/lib/Iou.fc src/lib/Util.fc src/lib/State/Local/StateTags.fc src/lib/State/Local/WaitingBoth.fc src/lib/State/Local/WaitingOne.fc src/lib/State/Local/Open.fc src/lib/State/Local/Closing.fc src/lib/State/GlobalState.fc src/lib/State/Util.fc src/lib/request/ReqOps.fc src/lib/Request/Close.fc src/lib/State/State.fc src/lib/Payout.fc src/contract/Handlers/simple_transfer_handler.fc src/contract/Handlers/close_handler.fc src/contract/Handlers/timeout_handler.fc src/contract/paychan.fc
+paychan_func_src = src/lib/Sign.fc src/lib/Iou.fc src/contract/errors.fc src/lib/Util.fc src/lib/State/Local/StateTags.fc src/lib/State/Local/WaitingBoth.fc src/lib/State/Local/WaitingOne.fc src/lib/State/Local/Open.fc src/lib/State/Local/Terminated.fc src/lib/State/Local/Closing.fc src/lib/State/GlobalState.fc src/lib/State/Util.fc src/lib/request/ReqOps.fc src/lib/Request/Close.fc src/lib/State/State.fc src/lib/Payout.fc src/contract/Handlers/simple_transfer_handler.fc src/contract/Handlers/close_handler.fc src/contract/Handlers/timeout_handler.fc src/contract/paychan.fc
 
 compile: build/paychan.boc
 

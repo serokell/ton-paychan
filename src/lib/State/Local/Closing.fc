@@ -17,7 +17,10 @@ cell mkStateClosing(
 }
 
 (slice, cell, cell, int) parseStateClosing(slice s) {
-  throw_if(1017, s~load_StateTag() != StateTags::Closing());
+  throw_when(
+    Prs::StateClosing(),
+    s~load_StateTag() != StateTags::Closing()
+    );
 
   return (s~load_pk(), s~load_ref(), s~load_ref(), s~load_timestamp());
 }

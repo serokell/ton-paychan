@@ -1,9 +1,9 @@
 ;; First 4 bits of cell is constructorId
-                                            
+
 builder store_StateTag(builder b, int tag) {
   return b.store_uint(tag, 4);
 }
-                                            
+
 (slice, int) load_StateTag(slice s) {
   return s.load_uint(4);
 }
@@ -13,3 +13,4 @@ int StateTags::WaitingBoth() { return 1; }
 int StateTags::WaitingOne()  { return 2; }
 int StateTags::Open()        { return 3; }
 int StateTags::Closing()     { return 4; }
+int StateTags::Terminated()  { return 5; }
