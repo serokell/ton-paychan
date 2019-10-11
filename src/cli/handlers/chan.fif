@@ -87,3 +87,9 @@ library Handlers_new
   swap rot swap mkCliStateNice
   saveCliStateNice
 } :cmdline cli_chan_join
+
+{ cmdline_getarg  // channel address
+  hex$>addr' { fail"Invalid address" } ifnot
+  loadCliStateNice
+  .cliStateNice
+} :cmdline cli_chan_info

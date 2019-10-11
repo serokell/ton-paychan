@@ -4,6 +4,8 @@
 
 library Address  // Smart-contract address utilities
 
+"String.fif" include
+
 
 // TODO[gpevnev]: Implement me
 { drop 0 0xDABFACE
@@ -11,13 +13,26 @@ library Address  // Smart-contract address utilities
 // ( globalConfig -- wc addr )
 
 { swap (.) +":"
-  swap 64 (0x.) $+
+  swap 64 u>hex$ $+
 } : addr>hex$
-// ( wc addr - str )
+// ( wc addr -- str )
 
 // Like `addr>hex$` but uses `-` instead of `:` so that it can be
 // used as a file name on Windows.
 { swap (.) +"-"
-  swap 64 (0x.) $+
+  swap 64 u>hex$ $+
 } : addr>hex$'
-// ( wc addr - str )
+// ( wc addr -- str )
+
+{ char - splitAt
+  swap (number) 1 =
+    { swap
+      hex$>u
+        { true }
+        { nip false }
+      cond
+    }
+    { false }
+  cond
+} : hex$>addr'
+// ( str -- wc addr -1 or 0 )

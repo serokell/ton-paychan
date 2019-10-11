@@ -7,6 +7,7 @@ library CliState  // The state of the cli tool
 
 "TonUtil.fif" include
 
+"Address.fif" include
 "State/GlobalState.fif" include
 
 //
@@ -122,8 +123,8 @@ library CliState  // The state of the cli tool
 
 { <s
   ref@+ swap
-  ref@+ dup sbits 8 / $@ swap
-  ref@+ dup sbits 8 / $@ swap
+  ref@+ <s dup sbits 8 / $@ swap
+  ref@+ <s dup sbits 8 / $@ swap
   s>
 } : parseCliStateNice
 // ( cliStateNice -- cliState ourPkName theirPkName )
@@ -140,9 +141,27 @@ library CliState  // The state of the cli tool
 } : saveCliStateNice
 // ( cliStateNice -- )
 
-{
-  addr>hex$ +".state"
+{ addr>hex$' +".state"
+  dup file-exists? not abort"State file for this channel does not exist"
   file>B
   B>boc
 } : loadCliStateNice
 // ( wc addr -- cliStateNice )
+
+{ parseCliStateNice
+  swap ."Keys: " type ." - " type cr
+
+  parseCliState
+  swap
+  parseGlobalState
+  drop
+  ."Shares: " 3 roll ._ ." - " 2 roll ._ cr
+  1 roll ."Timeout: " ._ ." (fine: " ._ .")" cr
+  cr
+  drop drop
+  dup getPaymentsStateWeOwe over getPaymentsStateTheyOwe
+  2dup - ."Balance: " ._ ." (" swap ._ ." - " ._ .")" cr
+  getPaymentsStateMissingAmount ."Missing: " ._ cr
+  drop drop
+} : .cliStateNice
+// ( cliStateNice -- )
