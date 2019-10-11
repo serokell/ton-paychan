@@ -22,7 +22,7 @@
   var (globalState, localState) = getState();
 
   if (op == ReqOp::SimpleTransfer()) {
-    var msg_pk = in_msg~load_pk();
+    var msg_pk = parseSMT(in_msg);
     var newLocalState =
       handle_simple_transfer(msg_src_addr, msg_value, msg_pk, globalState, localState);
     putLocalState(newLocalState);
