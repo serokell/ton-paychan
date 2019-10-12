@@ -83,7 +83,7 @@ library Handlers_new
     { fail"Their public key does not match the one in the request" } ifnot
   // ( ourKeyName theirKeyName wc addr globalState )
 
-  mkEmptyPaymentsState mkCliState
+  mkGlobalStateMirror mkEmptyPaymentsState mkCliState
   // ( ourKeyName theirKeyName cliState )
 
   swap rot swap mkCliStateNice

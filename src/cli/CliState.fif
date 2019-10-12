@@ -204,7 +204,7 @@ library CliState  // The state of the cli tool
 
 { dup getCliStateNiceCliState getCliStateAddr addr>hex$' +".state"
   swap 2 boc+>B swap
-  dup ."Updating channel state in file `" type ."`" cr B>file
+  B>file
 } : updateCliStateNice
 // ( cliStateNice -- )
 
