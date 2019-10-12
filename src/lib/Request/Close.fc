@@ -1,0 +1,10 @@
+cell getCloseReqCell(slice in_msg_body) {
+  var (_, c) = in_msg_body.load_ref();
+  return c;
+}
+
+;; payout, maybe iou
+(int, cell) parseCloseReq(cell closeReq) {
+  var s = closeReq.begin_parse();
+  return (s~load_int(121), s~load_ref());
+}

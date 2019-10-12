@@ -1,0 +1,38 @@
+int slice_eq_asm(slice a, slice b) asm "SDEQ";
+
+int slice_eq(slice a, slice b) {
+  return slice_eq_asm(a, b);
+}
+
+int slice=(slice a, slice b) {
+  return slice_eq(a, b);
+}
+
+;; for now only bits checked for eq
+int pk_eq(slice pk1, slice pk2) {
+  return pk1.slice_eq(pk2);
+}
+
+int addr_eq(slice addr1, slice addr2) {
+  return addr1.slice_eq(addr2);
+}
+
+(slice, slice) load_pk(slice s) {
+  return s.load_bits(256);
+}
+
+builder store_pk(builder b, slice s) {
+  return b.store_slice(s);
+}
+
+(slice, int) load_timestamp(slice s) {
+  return s.load_uint(256);
+}
+
+builder store_timestamp(builder b, int timestamp) {
+  return b.store_uint(timestamp, 256);
+}
+
+cell unreachableReturn() {
+  return begin_cell().end_cell();
+}

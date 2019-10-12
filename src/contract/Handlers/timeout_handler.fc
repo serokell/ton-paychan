@@ -1,0 +1,51 @@
+cell handle_timeout(
+  slice msg_src_addr,
+  cell globalState,
+  cell localState) impure {
+
+  var ls = localState.begin_parse();
+  var (_, stateTag) = ls.load_StateTag();
+
+  var (pk1, pk2, share1, share2, timeout, _, _)
+    = parseGlobalState(globalState);
+
+  if (stateTag == StateTags::Closing()) {
+    var (prevReqPk, openState, closeReq, prevTimestamp) =
+      parseStateClosing(ls);
+
+    var reqPk = msg_src_addr.addr2Pk(globalState, openState);
+
+    ;; timeout from other party
+    throw_when(Timeout::WrongParty(), ~ reqPk.pk_eq(prevReqPk));
+
+    var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
+    var (reqPayout, _) = parseCloseReq(closeReq);
+    if ((now() - prevTimestamp) > timeout) {
+      if (msg_src_addr.slice_eq(addr1)) {
+        proceedPayout2(
+          addr1, share1 + reqPayout,
+          addr2,  share2 - reqPayout
+          );
+        return terminateContract();
+      } elseif (msg_src_addr.slice_eq(addr2)) {
+        proceedPayout2(
+          addr1, share1 - reqPayout,
+          addr2, share2 + reqPayout
+          );
+        return terminateContract();
+      } else {
+        throw(Timeout::UnknownAddress());
+        return unreachableReturn();
+      }
+    } else {
+      ;; timeout initiated too early
+      throw(Timeout::TooEarly());
+      return unreachableReturn();
+    }
+  } else {
+    ;; transition not possible
+    throw(Timeout::InvalidState());
+    return unreachableReturn();
+  }
+}

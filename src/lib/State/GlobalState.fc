@@ -3,20 +3,20 @@
 ;; SPDX-License-Identifier: MPL-2.0
 
 cell mkGlobalState(
-  int pk1, int pk2,
+  slice pk1, slice pk2,
   int share1, int share2,
   int timeout,
   int fineAmount,
   int nonce) {
 
   return begin_cell()
-    .store_uint(256, pk1)
-    .store_uint(256, pk2)
-    .store_int(121, share1)
-    .store_int(121, share2)
-    .store_uint(32, timeout)
-    .store_uint(120, fineAmount)
-    .store_uint(64, nonce)
+    .store_pk(pk1)
+    .store_pk(pk2)
+    .store_uint(share1, 120)
+    .store_uint(share2, 120)
+    .store_uint(timeout, 32)
+    .store_uint(fineAmount, 120)
+    .store_uint(nonce, 64)
     .end_cell();
 }
 
@@ -24,10 +24,10 @@ cell mkGlobalState(
 _ parseGlobalState(cell data) {
   slice ds = data.begin_parse();
   var res =
-    ( ds~load_uint(256) ;; pk1
-    , ds~load_uint(256) ;; pk2
-    , ds~load_int(121) ;; share1
-    , ds~load_int(121) ;; share2
+    ( ds~load_pk()     ;; pk1
+    , ds~load_pk()     ;; pk2
+    , ds~load_uint(120) ;; share1
+    , ds~load_uint(120) ;; share2
     , ds~load_uint(32) ;; timeout
     , ds~load_uint(120) ;; fineAmount
     , ds~load_uint(64) ;; nonce

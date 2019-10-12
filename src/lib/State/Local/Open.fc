@@ -1,0 +1,25 @@
+cell mkOpenState(slice addr1, slice addr2) {
+  return begin_cell()
+    .store_slice(addr1)
+    .store_slice(addr2)
+    .end_cell();
+}
+
+cell getOpenState(cell stateOpen) {
+  var s = stateOpen.begin_parse();
+  throw_when(Prs::StateOpen(), s~load_StateTag() != StateTags::Open());
+  return s~load_ref();
+}
+
+
+;; MkStateOpen
+cell mkStateOpen(slice addr1, slice addr2) {
+  return begin_cell()
+    .store_StateTag(StateTags::Open())
+    .store_ref(mkOpenState(addr1, addr2))
+    .end_cell();
+}
+
+(slice, slice) parseOpenState(slice s) {
+  return (s~load_msg_addr(), s~load_msg_addr());
+}
