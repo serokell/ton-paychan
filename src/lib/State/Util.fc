@@ -1,0 +1,62 @@
+slice empty_slice() { return begin_cell().end_cell().begin_parse(); }
+
+slice pk2Addr(slice pk, cell globalState, cell openState) {
+  var (pk1, pk2, _, _, _, _, _) = parseGlobalState(globalState);
+
+  var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
+  if (pk.pk_eq(pk1)) {
+    return addr1;
+  } elseif(pk.pk_eq(pk2)) {
+    return addr2;
+  } else {
+    ;; unknown PK
+    throw(Util::Pk2Addr());
+    return empty_slice();
+  }
+}
+
+slice addr2Pk(slice addr, cell globalState, cell openState) {
+  var (pk1, pk2, _, _, _, _, _) = parseGlobalState(globalState);
+
+  var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
+  if (addr.addr_eq(addr1)) {
+    return pk1;
+  } elseif (addr.addr_eq(addr2)) {
+    return pk2;
+  } else {
+    ;; unkonwn addr
+    throw(Util::Addr2Pk());
+    return empty_slice();
+  }
+}
+
+int addr2Share(slice addr, cell globalState, cell openState) {
+  var (_, _, share1, share2, _, _, _) = parseGlobalState(globalState);
+
+  var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
+  if (addr.addr_eq(addr1)) {
+    return share1;
+  } elseif (addr.addr_eq(addr2)) {
+    return share2;
+  } else {
+    throw(Util::Addr2Share());
+    return 0;
+  }
+}
+
+int pk2Share(slice pk, cell globalState) {
+  var (pk1, pk2, share1, share2, _, _, _) =
+    parseGlobalState(globalState);
+
+  if (pk.pk_eq(pk1)) {
+    return share1;
+  } elseif (pk.pk_eq(pk2)) {
+    return share2;
+  } else {
+    throw(Util::Pk2Share());
+    return 0;
+  }
+}

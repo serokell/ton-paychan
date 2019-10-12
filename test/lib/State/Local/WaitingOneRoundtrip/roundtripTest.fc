@@ -1,0 +1,4 @@
+_ main(slice addr, slice pk) {
+  var c = mkStateWaitingOne(addr, pk);
+  return parseStateWaitingOne(c.begin_parse());
+}

@@ -1,0 +1,119 @@
+int isPayoutImpossible(int reqShare, int reqPayout, int otherShare) {
+  return (otherShare < reqPayout) | (reqShare < - reqPayout);
+}
+
+() throw_if_payoutImpossible(int reqShare, int reqPayout, int otherShare) impure {
+  throw_when(
+    Close::PayoutImpossible(),
+    isPayoutImpossible(reqShare, reqPayout, otherShare)
+    );
+}
+
+cell createStateClosing(slice reqPk, cell localState, cell closeReq) {
+   return mkStateClosing(
+     reqPk,
+     getOpenState(localState),
+     closeReq,
+     now()
+     );
+}
+
+cell payoutMatches(
+  slice addr1, slice addr2,
+  int payout1, int payout2,
+  int share1, int share2) impure {
+
+  if (- payout1 > share2) {
+    payout1 = - share2;
+  }
+
+  if (- payout2 > share1) {
+    payout2 = - share1;
+  }
+
+  proceedPayout2(addr1, share1 + payout1, addr2, share2 + payout2);
+  return terminateContract();
+}
+
+cell handle_close(
+  slice msg_src_addr,
+  cell closeReq,
+  cell globalState,
+  cell localState) impure {
+
+  var ls = localState.begin_parse();
+  var (_, stateTag) = ls.load_StateTag();
+
+
+  var (pk1, pk2, share1, share2, _, _, _)
+    = parseGlobalState(globalState);
+
+  var (payout, miou) = parseCloseReq(closeReq);
+
+  if (stateTag == StateTags::Open()) {
+    ;; Open -> Closing
+
+    var (addr1, addr2) = parseOpenState(ls);
+
+    if (msg_src_addr.slice_eq(addr1)) {
+      ;; current msg from party1
+      ;; reqShare = share1;
+      ;; reqPk = pk1;
+      ;; otherShare = share2;
+      throw_if_payoutImpossible(share1, payout, share2);
+      return createStateClosing(pk1, localState, closeReq);
+    } elseif (msg_src_addr.slice_eq(addr2)) {
+      ;; current msg from party2
+      ;; reqShare = share2;
+      ;; reqPk = pk2;
+      ;; otherShare = share1;
+      throw_if_payoutImpossible(share2, payout, share1);
+      return createStateClosing(pk2, localState, closeReq);
+    } else {
+      ;; unknown participant
+      throw(Close::UnknownParty1());
+      return unreachableReturn();
+    }
+  } elseif(stateTag == StateTags::Closing()) {
+    ;; Closing -> ???
+    var (prevReqPk, openState, prevCloseReq, prevTimestamp) =
+      parseStateClosing(ls);
+
+    var (prevPayout, prevIou) = parseCloseReq(prevCloseReq);
+    if (payout + prevPayout == 0) {
+      var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
+      if (msg_src_addr.slice_eq(addr1)) {
+        ;; current msg from party1
+        ;; payout1 = payout;
+        ;; payout2 = prevPayout;
+        return payoutMatches(
+          addr1, addr2,
+          payout, prevPayout,
+          share1, share2
+          );
+      } elseif (msg_src_addr.slice_eq(addr2)) {
+        ;; current msg from party2
+        ;; payout1 = prevPayout;
+        ;; payout2 = payout;
+        return payoutMatches(
+          addr1, addr2,
+          prevPayout, payout,
+          share1, share2
+        );
+      } else {
+        ;; unknown participant
+        throw(Close::UnknownParty2());
+        return unreachableReturn();
+      }
+    } else {
+      ;; TODO: resolve dispute
+      throw(33);
+      return unreachableReturn();
+    }
+  } else {
+    ;; Unknown state transition
+    throw(Close::InvalidState());
+    return unreachableReturn();
+  }
+}

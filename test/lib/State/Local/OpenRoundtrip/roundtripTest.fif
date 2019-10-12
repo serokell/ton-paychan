@@ -1,0 +1,34 @@
+"Test.fif" include
+"Asm.fif" include
+
+@tests State/Local/Open.fc <-> Roundtrip
+
+"roundtripTest.asm.gen" include constant contract
+
+{
+  <b
+  b{10} s, // addr_std tag
+  b{0} s,   // maybe anycast = Nothing
+  -1 8 i,   // workchainId
+  1901223 256 u, // address
+  b>
+} : buildStdAddr1
+
+{
+  <b
+  b{10} s, // addr_std tag
+  b{0} s,   // maybe anycast = Nothing
+  -1 8 i,   // workchainId
+  1901223 256 u, // address
+  b>
+} : buildStdAddr2
+
+
+{
+  buildStdAddr1 <s
+  buildStdAddr2 <s
+  contract <s
+  runvmdict 0= not abort"TVM died unexpectedly"
+  buildStdAddr2 <s assertSliceEq
+  buildStdAddr1 <s assertSliceEq
+} @test openRoundtrip

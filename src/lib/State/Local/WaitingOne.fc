@@ -1,0 +1,19 @@
+;; MkStateWaitingOne
+cell mkStateWaitingOne(slice addr, slice pk) {
+  return begin_cell()
+    .store_StateTag(StateTags::WaitingOne())
+    .store_slice(addr)
+    .store_pk(pk)
+    .end_cell();
+}
+
+;; addr, pk
+(slice, slice) parseStateWaitingOne(slice s) {
+  throw_when(
+    Prs::WaitingOne(),
+    s~load_StateTag() != StateTags::WaitingOne()
+    );
+  var addr = s~load_msg_addr();
+  var pk = s~load_pk();
+  return (addr, pk);
+}
