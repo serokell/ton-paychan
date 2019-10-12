@@ -39,3 +39,7 @@ library Address  // Smart-contract address utilities
   cond
 } : hex$>addr'
 // ( str -- wc addr -1 or 0 )
+
+
+{ addr>hex$' type
+} : .addr'

@@ -26,16 +26,6 @@ library Iou  // IOUs
 } : parseIouPayload
 // ( iouPayload -- wc addr amount iou uome )
 
-// NOTE: Does not check the signature
-{ getSignedData! parseIouPayload
-  -
-  swap
-  ."Payment:" cr
-  ."  Amount = " ._ cr
-  ."  New balance = " .balance cr
-  drop drop
-} : .iou!
-// ( iou -- )
 
 { 2 boc+>B
   "paychan.pay"

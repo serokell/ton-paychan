@@ -7,8 +7,10 @@ library CliState  // The state of the cli tool
 
 "TonUtil.fif" include
 
-"Address.fif" include
+"Iou.fif" include
 "State/GlobalState.fif" include
+
+"Address.fif" include
 
 //
 // PaymentsState
@@ -239,3 +241,40 @@ library CliState  // The state of the cli tool
   drop drop
 } : .cliStateNice
 // ( cliStateNice -- )
+
+
+//
+// IOU utils
+//
+
+{ parseIouPayload drop
+  3 roll 3 roll
+  ."Payment: (channel = " .addr' .")" cr
+  swap
+  ."  Amount = " ._ cr
+  - swap { negate } ifnot
+  ."  New balance = " .balance cr
+} : .iouPayload
+// ( outgoing? othersOwe iouPayload -- )
+
+{ 2 pick getGlobalStatePk1 checkSignedQ
+    { swap getPaymentsStateTheyOwe swap
+      true -rot
+      .iouPayload
+      ."Outgoing ->" cr
+    }
+    {
+      2 pick getGlobalStatePk2 checkSignedQ
+        { swap getPaymentsStateWeOwe swap
+          false -rot
+          .iouPayload
+          ."<- Incoming" cr
+        }
+        { fail"Could not verify the signature"
+        }
+      cond
+    }
+  cond
+  drop
+} : .iou
+// ( globalState paymentsState iou -- )

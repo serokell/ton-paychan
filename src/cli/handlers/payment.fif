@@ -7,6 +7,9 @@
 
 "../CliState.fif" include
 
+
+' cmdline_dispatch : cli_payment
+
 { cmdline_getarg  // channel address
   hex$>addr' { fail"Invalid address" } ifnot
 
@@ -30,24 +33,39 @@
 
   parseCliState
   // ( cliStateNice amount ourSk wc addr globalState paymentsState )
+  over 7 -roll
+  // ( globalState cliStateNice amount ourSk wc addr globalState paymentsState )
   swap getGlobalStateShare1 swap
-  // ( cliStateNice amount ourSk wc addr ourShare paymentsState )
+  // ( globalState cliStateNice amount ourSk wc addr ourShare paymentsState )
 
   5 pick swap addPaymentsStateWeOwe
-  // ( cliStateNice amount ourSk wc addr ourShare paymentsState' )
+  // ( globalState cliStateNice amount ourSk wc addr ourShare paymentsState' )
 
   dup -rot getPaymentsStateBalance >=
     { fail"Payment impossible: our commitment is not large enough" } ifnot
-  // ( cliStateNice amount ourSk wc addr paymentsState' )
+  // ( globalState cliStateNice amount ourSk wc addr paymentsState' )
   4 roll swap
-  // ( cliStateNice ourSk wc addr amount paymentsState' )
+  // ( globalState cliStateNice ourSk wc addr amount paymentsState' )
   dup getPaymentsStateWeOwe swap dup getPaymentsStateTheyOwe swap
-  // ( cliStateNice ourSk wc addr amount weOwe theyOwe paymentsState' )
-  6 -roll mkIou dup .iou!
+  // ( globalState cliStateNice ourSk wc addr amount weOwe theyOwe paymentsState' )
+  6 -roll mkIou
+  // ( globalState cliStateNice paymentsState' iou )
+  3 roll 2 pick 2 pick .iou
   // ( cliStateNice paymentsState' iou )
   saveIou
   // ( cliStateNice paymentsState' )
   over getCliStateNiceCliState setCliStatePaymentsState
   swap setCliStateNiceCliState
   updateCliStateNice
-} : cli_pay
+} : cli_payment_send
+
+{ loadIou
+  // ( iou )
+  dup getSignedData! parseIouPayload drop drop drop
+  // ( iou wc addr )
+  loadCliStateNice getCliStateNiceCliState parseCliState
+  // ( iou wc addr globalState paymentsState )
+  4 -roll 4 -roll drop drop
+  // ( globalState paymentsState iou )
+  .iou
+} : cli_payment_info
