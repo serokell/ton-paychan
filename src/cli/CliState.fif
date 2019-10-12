@@ -84,7 +84,7 @@ library CliState  // The state of the cli tool
 
 { <s ref@?
 } : getPaymentsStateIou
-// ( paymentsState -- (iou -1 | 0) )
+// ( paymentsState -- (iou true | false) )
 
 { <s <b swap
   248 u@+ -rot 248 u, swap

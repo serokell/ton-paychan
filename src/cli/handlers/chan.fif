@@ -103,6 +103,22 @@ library Handlers_new
   load-key-pair drop swap
   // ( ourSk cliState )
 
+  getCliStatePaymentsState
+  // ( ourSk paymentsState )
+
+  dup getPaymentsStateBalance swap getPaymentsStateIou
+  // ( ourSk balance (iou true | false) )
+
+  //TODO[gpevnev]: prepare a close message
+} :cmdline cli_chan_close
+
+{ cmdline_getarg  // channel address
+  hex$>addr' { fail"Invalid address" } ifnot
+  loadCliStateNice parseCliStateNice drop
+  // ( cliState ourPkName )
+  load-key-pair drop swap
+  // ( ourSk cliState )
+
   parseCliState swap drop 0 swap
   // ( ourSk wc addr 0 paymentsState )
   dup getPaymentsStateWeOwe swap getPaymentsStateTheyOwe
