@@ -95,3 +95,19 @@ library Handlers_new
   loadCliStateNice
   .cliStateNice
 } :cmdline cli_chan_info
+
+{ cmdline_getarg  // channel address
+  hex$>addr' { fail"Invalid address" } ifnot
+  loadCliStateNice parseCliStateNice drop
+  // ( cliState ourPkName )
+  load-key-pair drop swap
+  // ( ourSk cliState )
+
+  parseCliState swap drop 0 swap
+  // ( ourSk wc addr 0 paymentsState )
+  dup getPaymentsStateWeOwe swap getPaymentsStateTheyOwe
+  mkIou
+
+  ."State sync message will be formatted as a payment with amount = 0." cr
+  saveIou
+} :cmdline cli_chan_sync

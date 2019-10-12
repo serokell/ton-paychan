@@ -119,8 +119,8 @@ library CliState  // The state of the cli tool
 } : addPaymentsStateMissingAmount
 // ( delta paymentsState -- paymentsState' )
 
-{ dup getPaymentsStateWeOwe
-  swap getPaymentsStateTheyOwe
+{ dup getPaymentsStateTheyOwe
+  swap getPaymentsStateWeOwe
   -
 } : getPaymentsStateBalance
 // ( paymentsState -- balance )

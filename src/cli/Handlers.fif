@@ -9,7 +9,7 @@
 { ."Usage:" cr
   ."  " $0 type
     ." [ key gen"
-    ." | chan [ new | join | close | info ]"
+    ." | chan [ new | join | close | info | sync ]"
     ." | payment [ send | recv | info ]"
     ." ]" cr
   cr
@@ -45,6 +45,12 @@
     ."    chan info"
     ." <channel address>"
     cr
+  cr
+  ."  Send a state synchronisation message:" cr
+    ."    chan sync"
+    ." <channel address>"
+    cr
+    ."  (Writes state sync message to `paychan.pay`)" cr
   cr
   ."  Make a payment through a payment channel:" cr
     ."    payment send"
