@@ -146,9 +146,10 @@ When a new IOU arrives from the other party, the following steps are performed:
    the channel. Otherwise reject the IOU.
 3. Compare their `iou` with our `theyOwe`:
     * If it is greater or equal, then this is a new transaction. Check that
-      `amount` equals `iou - theyOwe`. If it is not the case, warn the user
+      `amount` equals `iou - theyOwe`. If it is greater, warn the user
       that some incoming payment that happened before this one went missing
-      and add the difference to `missingAmount`. Then set `theOwe := iou`.
+      and add the difference to `missingAmount`. If it is smaller, reject.
+      Then set `theyOwe := iou`.
     * If it is less, then this is one of the previously missing transactions.
       Check that `amount` is not greater than `missingAmount`, otherwise reject.
       Subtract `amount` from `missingAmount`.

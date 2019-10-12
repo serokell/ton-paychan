@@ -156,6 +156,12 @@ library CliState  // The state of the cli tool
 } : getCliStateAddr
 // ( cliState -- wc addr )
 
+{ <s
+  ref@+ drop
+  ref@
+} : getCliStatePaymentsState
+// ( cliState -- paymentsState )
+
 { <s <b swap
   addr@+ 3 -roll addr, swap
   ref@ ref,

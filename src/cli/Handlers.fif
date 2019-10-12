@@ -60,6 +60,7 @@
   cr
   ."  Receive a payment through a payment channel:" cr
     ."    payment receive"
+    ." <channel address>"
     cr
     ."  (Reads off-chain transaction from `paychan.pay`)" cr
 } constant handlers_usage
