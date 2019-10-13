@@ -288,8 +288,9 @@ The contract is waiting for a confirmation from the other party. Transitions:
   `MkStateOpen`.
 * The other party disappears and the original requester forces the channel
   to close (`MkRequestTimeout`). If the amount of time given by `timeout` has
-  passed -> `MkStateTerminated`, where the payment is made according to the
-  request and the other party is fined.
+  passed -> `MkStateTerminated`, where the payment the disappeared party
+  is fined and the payment proceeds as if they submitted a close request
+  with a zero balance and no IOU.
   Otherwise the request is rejected.
 
 ### Terminating the contract (`MkStateTerminated`)
