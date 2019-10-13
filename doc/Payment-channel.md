@@ -230,6 +230,7 @@ configuration) and local state `MkStateWaitingBoth`. Transitions possible:
   The new state records the address that the funds arrived from
   (it will be used for the payout in the end) and the identity of the
   other party we are waiting for.
+  The amount equal to the requester’s share plus deposit is reserved.
 * The deployer of the contract requests it terminated (`MkRequestTimeout`) ->
   `MkStateTerminated`.
 
@@ -242,6 +243,7 @@ the other one. Possible transitions:
 * The second party contributes their share -> `MkStateOpen`. If the amount
   is smaller than the party’s share plus the fine deposit, the transaction is
   rejected. Otherwise, the address of the second party is recorded.
+  The amount equal to the same of the two shares plus two deposits is reserved.
 
 ### The channel is open (`MkStateOpen`)
 
@@ -306,9 +308,31 @@ When the contract is destroyed, the following happens:
   their shares.
 
 
-## TODO
+## Fuelling the contract
 
-* Set gas limit to make sure the locked amounts are never spent for gas
+Paying for the gas consumption of the contract and especially the storage
+costs incurred by the contract is outside the scope of this specification.
+
+* The contract does not `ACCEPT` incoming external messages and does not process
+  them in any way.
+* When processing incoming internal messages, the contract does not alter
+  the default gas limit, which means that it will never spend more than the
+  value attached to the message, therefore message processing costs are borne by
+  each party individually for the messages they submit.
+* The contract will always accept any “extra” funds sent to it with simple
+  transfer messages. On termination, the funds will be distributed between the
+  two parties proportional to their shares.
+* The contract logic does not take into account the storage costs,
+  therefore it is possible that the final payout will fail if funds go below
+  the required level; the parties are expected to agree with each other on
+  the matter of covering the storage costs and should make sure that
+  there are enough funds before closing the contract and refill it by simple
+  transfer messages, if necessary.
+* When receiving the shares of the parties, the contract must make sure that
+  the right amount of funds will end up being locked in it _after_ the message
+  is processed. In order to do so, it uses `RAWRESERVE` reserving the amount
+  it expects to have in the end, so that if it goes below this level, the
+  transaction fails.
 
 
 ## Further work
