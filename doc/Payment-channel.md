@@ -22,7 +22,7 @@ channel contract is preconfigured and deployed to the blockchain network
 The contract starts in the “waiting” state, which means that it is waiting
 for initial commitments from both parties. Alice and Bob each have to send
 to the contract the amount of tokens equal to their share, plus and extra
-amount that will be locked in order to be used as a fine payment in case of
+deposit that will be locked in order to be used as a fine payment in case of
 misbehaviour. After one of the parties makes their transaction, they can cancel
 contract initialisation and destroy it any time until the other party sends
 their transaction as well. After this the tokens are locked in the contract
@@ -68,7 +68,7 @@ recent IOU from Alice showing a larger amount, in which case the contract
 will perform the distribution according to this newer IOU and fines Alice.
 In case Bob does neither, after the fixed time passes, Alice can request
 the contract to go ahead and distribute the funds according to her proposal
-and fine Bob.
+and fines Bob.
 
 
 ## Off-chain protocol
@@ -142,8 +142,8 @@ When a new IOU arrives from the other party, the following steps are performed:
    them more than what we think we ever promised, thus it implies that the
    other party is trying to cheat or their state is corrupted, so the IOU
    has to be rejected.
-2. Check that `(iou - uome)` is not greater than their share contributed to
-   the channel. Otherwise reject the IOU.
+2. Check that the new value of `(iou - uome)` is not greater than their share
+   contributed to the channel. Otherwise reject the IOU.
 3. Compare their `iou` with our `theyOwe`:
     * If it is greater or equal, then this is a new transaction. Check that
       `amount` equals `iou - theyOwe`. If it is greater, warn the user
@@ -156,8 +156,9 @@ When a new IOU arrives from the other party, the following steps are performed:
 
 To make a new micro-payment:
 
-1. Add the desired amount to `weOwe`.
-2. Prepare a new IOU with the updated values and send it.
+1. Check that the remaining share is enough for the payment.
+2. Add the desired amount to `weOwe`.
+3. Prepare a new IOU with the updated values and send it.
 
 
 ## Contract logic
@@ -174,8 +175,8 @@ data PayChanState = MkPayChanState
 data GlobalState = MkGlobalState
   { parties :: (PublicKey, PublicKey)
   , shares :: (UInt120, UInt120)
-  , timeout :: UInt32
-  , fineAmount :: UInt120
+  , timeout :: UInt32  -- ^ Inactivity timeout
+  , fineAmount :: UInt120  -- ^ Fine for inactivity
   , nonce :: UInt64  -- ^ Set to deployment time-stamp to change the hash
   }
 
@@ -184,6 +185,7 @@ data LocalState
   | MkStateWaitingOne Address PublicKey  -- ^ Waiting for the second share
   | MkStateOpen OpenState  -- ^ The channel is open and can be used
   | MkStateClosing OpenState ClosingState  -- ^ One party requested the channel to close
+  | MkStateTerminated  -- ^ Unreachable state, indicates the contract was destoyed
 
 data OpenState = MkOpenState (Address, Address)
 
@@ -213,20 +215,25 @@ data CloseRequest = MkCloseRequest
 The contract is initialised with its global state (which plays the role of
 configuration) and local state `MkStateWaitingBoth`. Transitions possible:
 
-* One party contributes their share -> `MkStateWaitingOne`. The new state
-  records the address that the funds arrived from (it will be used for the
-  payout in the end) and the identity of the other party we are waiting for.
-* The deployer of the contract requests it destroyed.
+* One party contributes their share -> `MkStateWaitingOne`. First, the contract
+  check that the amount contributed is enough, that is, it is not smaller than
+  this party’s share plus the fine deposit, otherwise the transaction is
+  rejected.
+  The new state records the address that the funds arrived from
+  (it will be used for the payout in the end) and the identity of the
+  other party we are waiting for.
+* The deployer of the contract requests it terminated (`MkRequestTimeout`) ->
+  `MkStateTerminated`.
 
 ### Waiting for the second share (`MkStateWaitingOne`)
 
 One of the parties has contributed their share and the contract waiting for
 the other one. Possible transitions:
 
-* The first party requests a refund (`MkDisputeOk`) -> their share is returned
-  back to their address and the contract is destroyed.
-* The second party contributes their share -> `MkStateOpen`. The address
-  of the second party is recorded as well.
+* The first party requests a refund (`MkRequestTimeout`) -> `MkStateTerminated`.
+* The second party contributes their share -> `MkStateOpen`. If the amount
+  is smaller than the party’s share plus the fine deposit, the transaction is
+  rejected. Otherwise, the address of the second party is recorded.
 
 ### The channel is open (`MkStateOpen`)
 
@@ -235,7 +242,7 @@ until they decide to close the channel or one of the parties requests
 arbitration. Possible transitions:
 
 * One party requests the channel closed (`MkRequestClose`) -> `MkStateClosing`.
-  (If the `payout` value is impossible, the request is rejected.)
+  (If payout with the given `payout` value is impossible, the request is rejected.)
   The contract remembers the requester and the IOU they provided, if any, but
   it is not verified yet. Current time-stamp is also recorded.
 
@@ -244,52 +251,56 @@ arbitration. Possible transitions:
 The contract is waiting for a confirmation from the other party. Transitions:
 
 * The other party requests the channel to be closed (`MkRequestClose`) and the
-  requested payouts agree with each other exactly, that is, their sum is 0.
+  requested payouts agree with each other exactly, that is, their sum is 0 ->
+  `MkStateTerminated`.
   In this case the payout is performed according to the requests and the
   contract is destroyed. “According to the requests” means that the first party
   gets the amount of tokens equal to their initial share plus their request;
   and the second party gets the amount of tokens equal to their initial share
   minus the first party’s request (or plus their request, which is the same).
   If one of the requested payout values was negative and its absolute value
-  is more than the corresponding party’s contributed share, the computation
+  was more than the corresponding party’s contributed share, the computation
   proceeds as if the requested payout was equal to this share’s value negated,
   and the party is fined.
 * The other party requests the channel to be closed (`MkRequestClose`) and the
-  requested payouts do not agree with each other exactly. In this case the
-  final distribution is computed as follows, assuming both IOUs are properly signed:
+  requested payouts do not agree with each other exactly.
+  In this case the final distribution is computed as follows:
     * `owes1`, the amount owed by the first party, is computed as the maximum of
       `(iou - payout)` from their request and `iou` from the second party’s
       request.
     * `owes2`, the amount owed by the second party is computed symmetrically.
     * The payout proceeds as if the requested balances were `(owes2 - owes1)`
       and `(owes1 - owes2)` respectively.
-  If any of the IOUs is was not provided, it is assumed that it contains zeroes
+  If either of the IOUs was not provided, it is assumed that it contains zeroes
   in its `iou` and `uome` fields.
-  If one of the IOUs is not properly signed, the computation proceeds as if
+  If either of the IOUs is not properly signed, the computation proceeds as if
   the corresponding party did not provide an IOU at all, and in addition
   this party is fined.
   If both IOUs are not properly signed, the contract transitions back to
   `MkStateOpen`.
 * The other party disappears and the original requester forces the channel
   to close (`MkRequestTimeout`). If the amount of time given by `timeout` has
-  passed, the payment is made according to the request and the other party
-  is fined. Otherwise the request is rejected. (TODO: charge for incorrect
-  requests.)
+  passed -> `MkStateTerminated`, where the payment is made according to the
+  request and the other party is fined.
+  Otherwise the request is rejected.
 
-If the contract is destroyed, the locked fines amounts are returned to their
-respective parties, unless one of the was fined in the process, in which case
-both locked amounts are transferred to the honest party.
+### Terminating the contract (`MkStateTerminated`)
 
+When the contract is destroyed, the following happens:
 
-
-
+* If the contract is terminated before transition to `MkStateOpen`, the party
+  that contributes its share gets it back together with their fine deposit.
+* If the contract was closed correctly, the shares are redistributed according
+  to the `payout` values provided by the parties and. The fine deposits are
+  refunded if neither party was fined, or, if one of the parties was fined,
+  they get both deposits.
+* Any remaining funds are distributed among the two parties proportional to
+  their shares.
 
 
 ## TODO
 
-* Figure out how to punish parties for incorrect requests
 * Set gas limit to make sure the locked amounts are never spent for gas
-* Send the extra gas-tokens somewhere when closed
 
 
 ## Further work
