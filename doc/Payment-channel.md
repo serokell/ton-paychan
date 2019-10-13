@@ -205,8 +205,14 @@ data DisputeState = MkDisputeState
 Users can make the following requests:
 
 ```haskell
+data RawReq = RawReq
+  { pk :: PublicKey
+  , signature :: Bits 512
+  , req :: Request
+  }
+
 data Request
-  | MkRequestSMT PK (Signed (PK, Addr))
+  | MkRequestJoin Addr
   | MkRequestClose CloseRequest
   | MkRequestDispute DisputeRequest
   | MkRequestDisputeOk

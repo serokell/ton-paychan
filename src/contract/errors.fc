@@ -4,27 +4,27 @@ int STM::SuppliedNotEnough1()      { return 1002; }
 int STM::SuppliedNotEnough2()      { return 1003; }
 int STM::UnknownParty()            { return 1004; }
 int STM::InvalidState()            { return 1005; }
-int STM::BadSignature()            { return 1021; }
-int STM::AddressMismatch()         { return 1022; }
+int STM::BadSignature()            { return 1006; }
+int STM::AddressMismatch()         { return 1007; }
 
-int Close::PayoutImpossible()      { return 1006; }
-int Close::UnknownParty1()         { return 1007; }
-int Close::UnknownParty2()         { return 1008; }
-int Close::InvalidState()          { return 1009; }
-;; TODO
-int Timeout::WrongParty()          { return 1010; }
-int Timeout::UnknownAddress()      { return 1011; }
-int Timeout::TooEarly()            { return 1012; }
-int Timeout::InvalidState()        { return 1013; }
+int Close::PayoutImpossible()      { return 1101; }
+int Close::UnknownParty1()         { return 1102; }
+int Close::UnknownParty2()         { return 1103; }
+int Close::InvalidState()          { return 1104; }
 
-int Prs::StateClosing()            { return 1014; }
-int Prs::StateOpen()               { return 1015; }
-int Prs::WaitingOne()              { return 1016; }
+int Timeout::WrongParty()          { return 1201; }
+int Timeout::UnknownAddress()      { return 1202; }
+int Timeout::TooEarly()            { return 1203; }
+int Timeout::InvalidState()        { return 1204; }
 
-int Util::Pk2Addr()                { return 1017; }
-int Util::Addr2Pk()                { return 1018; }
-int Util::Addr2Share()             { return 1019; }
-int Util::Pk2Share()               { return 1020; }
+int Prs::StateClosing()            { return 1301; }
+int Prs::StateOpen()               { return 1302; }
+int Prs::WaitingOne()              { return 1303; }
+
+int Util::Pk2Addr()                { return 1401; }
+int Util::Addr2Pk()                { return 1402; }
+int Util::Addr2Share()             { return 1403; }
+int Util::Pk2Share()               { return 1404; }
 
 () throw_when(int errorCode, int cond) impure {
   if (cond) {
