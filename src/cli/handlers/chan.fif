@@ -5,6 +5,7 @@
 library Handlers_new
 
 "Address.fif" include
+"ContractMessages.fif" include
 
 "../CliState.fif" include
 
@@ -31,26 +32,41 @@ library Handlers_new
   // ( ourKeyName ourSk ourPk )
 
   cmdline_getarg_int  // share our (grams)
-
+  // sk pk share
+  tuck
+  // sk share pk share
   cmdline_getarg  // name of their pk
   dup 5 -roll
   load-key-public
-  // ( theirKeyName ourKeyName ourSk ourPk ourShare theirPk )
+  // ( theirKeyName ourKeyName ourSk ourShare ourPk ourShare theirPk )
 
   cmdline_getarg_int  // share their (grams)
   rot swap
-  // ( theirKeyName ourKeyName ourSk ourPk theirPk ourShare theirShare )
+  // ( theirKeyName ourKeyName ourSk ourShare ourPk theirPk ourShare theirShare )
 
   cmdline_getarg_int  // timeout (seconds)
 
   cmdline_getarg_int  // fineAmount (grams)
 
+
+
   now  // nonce
 
   mkGlobalState
-  // ( theirKeyName ourKeyName ourSk globalState )
+  // ( theirKeyName ourKeyName ourSk ourShare globalState )
 
-  dup dup paychan-addr
+  dup
+  0 createStateInit // TODO: take workchain as param
+  // ( theirKN ourKN ourSk ourShare globalState stateInit wc addr )
+  2dup 7 pick -rot
+  mkSTMBody
+  // ( theirKN ourKN ourSk ourShare globalState stateInit wc addr STM-body )
+  -rot 2dup 7 roll 6 roll 6 roll
+  createInitMessage
+  boc>B "init-message.boc" tuck B>file
+  ."Init-message written to file " type cr
+  // ( theirKN ourKN ourSk globalState wc addr initMsg )
+  2 pick -rot
   // ( theirKeyname ourKeyName ourSk globalState globalState wc addr )
   2dup 5 -roll 5 -roll
   // ( theirKeyname ourKeyName ourSk wc addr globalState globalState wc addr )
@@ -65,23 +81,32 @@ library Handlers_new
   dup _saveJoinRequest
   // ( ourSk wc addr globalState )
 
-  // TODO[gpevnev]: output the deployment msg
   // cmdline_getarg_int  // extra for fuel (grams)
 } :cmdline cli_chan_new
 
 { ."Joining a channel..." cr
-  cmdline_getarg dup load-key-pair nip
+  cmdline_getarg dup load-key-pair
   cmdline_getarg dup load-key-public
   _loadJoinRequest
-  // ( ourKeyName ourPk theirKeyname theirPk globalState )
+  // ( ourKeyName ourSk ourPk theirKeyname theirPk globalState )
 
   dup getGlobalStatePk2 4 roll B=
     { fail"Our public key does not match the one in the request" } ifnot
   dup getGlobalStatePk1 2 roll B=
     { fail"Their public key does not match the one in the request" } ifnot
-  // ( ourKeyName theirKeyName globalState )
-
-  dup paychan-addr rot mkEmptyPaymentsState mkCliState
+  // ( ourKeyName ourSk theirKeyName globalState )
+  dup
+  paychan-addr 2dup 2dup
+  8 roll -rot mkSTMBody
+  // ( ourKeyName theirKeyName globalState wc addr wc addr stmbody )
+  5 pick getGlobalStateShare2 swap
+  // ( ourKN theirKN globalState wc addr wc addr share2 stmbody )
+  createMsg
+  // ( ourKN thteirKN globalState wc addr msg )
+  boc>B "join-message.boc" tuck B>file
+  ."Saved join message for smartcontract to " type cr
+  // ( ourKN theirKN globalState wc addr )
+  rot mkEmptyPaymentsState mkCliState
   // ( ourKeyName theirKeyName cliState )
 
   swap rot swap mkCliStateNice

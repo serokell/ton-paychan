@@ -12,8 +12,8 @@ library GlobalState  // Payment channel global (immutable) state
 { <b
   7 roll _assert_key B,
   6 roll _assert_key B,
-  5 roll 121 i,
-  4 roll 121 i,
+  5 roll 120 u,
+  4 roll 120 u,
   3 roll 32 u,
   2 roll 120 u,
   1 roll 64 u,
@@ -24,8 +24,8 @@ library GlobalState  // Payment channel global (immutable) state
 { <s
   32 B@+
   32 B@+
-  121 i@+
-  121 i@+
+  120 u@+
+  120 u@+
   32 u@+
   120 u@+
   64 u@+
@@ -43,3 +43,18 @@ library GlobalState  // Payment channel global (immutable) state
   32 B@
 } : getGlobalStatePk2
 // ( globalState -- pk2 )
+
+{ <s
+  32 B@+ nip
+  32 B@+ nip
+  120 u@
+} : getGlobalStateShare1
+// ( globalState -- share1 )
+
+{ <s
+  32 B@+ nip
+  32 B@+ nip
+  120 u@+ nip
+  120 u@
+} : getGlobalStateShare2
+// ( globalState -- share2 )
