@@ -4,6 +4,8 @@ int STM::SuppliedNotEnough1()      { return 1002; }
 int STM::SuppliedNotEnough2()      { return 1003; }
 int STM::UnknownParty()            { return 1004; }
 int STM::InvalidState()            { return 1005; }
+int STM::BadSignature()            { return 1021; }
+int STM::AddressMismatch()         { return 1022; }
 
 int Close::PayoutImpossible()      { return 1006; }
 int Close::UnknownParty1()         { return 1007; }
@@ -26,6 +28,12 @@ int Util::Pk2Share()               { return 1020; }
 
 () throw_when(int errorCode, int cond) impure {
   if (cond) {
+    throw(errorCode);
+  }
+}
+
+() throw_unless_(int errorCode, int cond) impure {
+  if (~ cond) {
     throw(errorCode);
   }
 }

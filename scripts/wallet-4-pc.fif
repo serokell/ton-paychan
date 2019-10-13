@@ -1,0 +1,52 @@
+#!/usr/bin/fift -s
+"TonUtil.fif" include
+
+{ ."Message to be frowarded:" cr
+  ."{" cr
+  <s
+    1 u@+ swap 0 = not abort"Message passed is external, should be internal"
+    1 u@+ swap ."  ihr_disabled: " . cr
+    1 u@+ swap ."  bounce: " . cr
+    1 u@+ swap ."  bounced: " . cr
+    2 u@+ swap 0 = not abort"src address expected to be addr_none$00 and be filled by wallet"
+    2 u@+ swap 2 = not abort"dest address expected to be addr_std$10"
+    1 u@+ swap 0 = not abort"Anycast should be nothing"
+
+    8 i@+ 256 u@+ -rot ."  dest: " 7 .Addr cr
+    Gram@+ swap ."  value: " .GR cr
+  drop
+  ."}" cr
+} : printMsg
+
+
+{ ."usage: " @' $0 type ." <filename-base> <seqno> <message-file> [<savefile>]" cr
+  ."Creates a request to simple wallet created by new-wallet.fif, with private key loaded from file <filename-base>.pk "
+  ."and address from <filename-base>.addr, and saves it into <savefile>.boc ('wallet-query.boc' by default)" cr 1 halt
+} : usage
+$# dup 3 < swap 5 > or ' usage if
+
+$1 =: file-base
+$2 parse-int =: seqno
+$3 =: message-file
+def? $4 { @' $4 } { "wallet-query" } cond constant savefile
+3 constant send-mode  // mode for SENDRAWMSG: +1 - sender pays fees, +2 - ignore errors
+
+file-base +".addr" load-address
+2dup 2constant wallet_addr
+."Source wallet address = " 2dup .addr cr 6 .Addr cr
+file-base +".pk" load-keypair nip constant wallet_pk
+
+// load message
+."Loading message to be forwareded from file " message-file type cr
+message-file file>B B>boc =: message-cell
+
+message-cell printMsg
+// construct message body
+<b seqno 32 u, send-mode 8 u, message-cell ref, b>
+."signing message: "
+dup hashu wallet_pk ed25519_sign_uint
+<b b{1000100} s, wallet_addr addr, 0 Gram, b{00} s,
+   swap B, swap <s s, b>
+2 boc+>B dup Bx. cr
+savefile +".boc" tuck B>file
+."(Saved to file " type .")" cr
