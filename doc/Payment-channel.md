@@ -140,8 +140,8 @@ When a new IOU arrives from the other party, the following steps are performed:
 1. Check that their `uome` field of the IOU is not greater than our recorded
    `weOwe` value. It is impossible that a honest party would think that we owe
    them more than what we think we ever promised, thus it implies that the
-   other party is trying to cheat, so this IOU is rejected and the other
-   party is reported.
+   other party is trying to cheat or their state is corrupted, so the IOU
+   has to be rejected.
 2. Check that `(iou - uome)` is not greater than their share contributed to
    the channel. Otherwise reject the IOU.
 3. Compare their `iou` with our `theyOwe`:
@@ -184,7 +184,6 @@ data LocalState
   | MkStateWaitingOne Address PublicKey  -- ^ Waiting for the second share
   | MkStateOpen OpenState  -- ^ The channel is open and can be used
   | MkStateClosing OpenState ClosingState  -- ^ One party requested the channel to close
-  | MkStateDispute OpenState DisputeState  -- ^ One of the party started a dispute
 
 data OpenState = MkOpenState (Address, Address)
 
@@ -193,12 +192,6 @@ data ClosingState = MkClosingState
   , openState :: OpenState  --^ Details from the previous state
   , request :: CloseRequest  -- ^ Details of the request provided
   , timestamp :: Timestamp  -- ^ When the channel was requested to close
-  }
-
-data DisputeState = MkDisputeState
-  { starter :: PublicKey  -- ^ Who started the dispute
-  , request :: DisputeRequest  -- ^ Details of the request provided
-  , timestamp :: Timestamp  -- ^ When the dispute was started
   }
 ```
 
@@ -214,25 +207,12 @@ data RawReq = RawReq
 data Request
   | MkRequestJoin Addr
   | MkRequestClose CloseRequest
-  | MkRequestDispute DisputeRequest
-  | MkRequestDisputeOk
-  | MkRequestDisputeBad DisputeBadRequest
   | MkRequestTimeout
 
 
 data CloseRequest = MkCloseRequest
   { payout :: Int121  -- ^ Requested payout
   , iou :: Maybe Iou  -- ^ Last IOU from the other party
-  }
-
-data DisputeRequest = MkDisputeRequest
-  { closeRequest :: CloseRequest
-  , badIou :: Iou  -- ^ Invalid IOU from the other party
-  }
-
-data DisputeBadRequest = MkDisputeRequest
-  { goodIou :: Iou  -- ^ IOU from the other party that proves them wrong
-  , closeRequest :: CloseRequest
   }
 ```
 
@@ -266,9 +246,6 @@ arbitration. Possible transitions:
   (If the `payout` value is impossible, the request is rejected.)
   The contract remembers the requester and the IOU they provided, if any, but
   it is not verified yet. Current time-stamp is also recorded.
-* One party disputes an incorrect IOU from the other (`MkRequestDispute`) ->
-  `MkStateDispute`. Again, all details of the request, include the time-stamp,
-  are remembered.
 
 ### The channel is closing (`MkStateClosing`)
 
@@ -312,25 +289,8 @@ respective parties, unless one of the was fined in the process, in which case
 both locked amounts are transferred to the honest party.
 
 
-### A dispute is happening (`MkStateDispute`)
 
-One of the parties reported incorrect behaviour of the other party. Only one
-time of incorrect behaviour can be detected: the second party sent to the
-first one an IOU that indicated that the first party transferred more than they
-ever agreed to. In order to contend, the second party has to present an IOU
-that shows that the first party indeed transferred to them that much.
-Transitions:
 
-* The second party agrees that the dispute is valid (`MkRequestDisputeOk`).
-  The payout is made as requested and the offending party is fined.
-* The second party disagrees with the dispute (`MkRequestDisputeBad`).
-  They have to provide any IOU signed by the first party that shows that they
-  transferred in total at least as much as shown in the allegedly bad IOU.
-  If they succeed in doing so, the payout is made according to their new
-  request and the first party is fined. Otherwise the payout is made according
-  to the original request and the second party is fined.
-* The second party does not respond to the dispute (`MkRequestTimeout`).
-  Same as with closing.
 
 
 ## TODO
