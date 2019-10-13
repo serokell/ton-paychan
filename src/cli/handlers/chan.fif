@@ -111,7 +111,7 @@ library Handlers_new
   dup getPaymentsStateBalance swap getPaymentsStateIou
   // ( ourSk balance (iou true | false) )
 
-  //TODO[gpevnev]: prepare a close message
+  // TODO[gpevnev]: prepare a close message
 } :cmdline cli_chan_close
 
 { cmdline_getarg  // channel address
