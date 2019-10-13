@@ -1,0 +1,81 @@
+library ContractMessages  // Smart-contract address utilities
+
+"TonUtil.fif" include
+"State/GlobalState.fif" include
+{ <b 1 4 u, b> } : mkWaitingBoth
+
+"build/paychan.boc" constant paychan-code
+
+{
+  // stack: (globalState: Cell) (wc: Int)
+
+  swap
+  // stack: wc, state
+  paychan-code file>B B>boc // TODO: take codepath as param
+  ."Loaded paychan code from " paychan-code type cr
+  swap
+  // wc, code, globalState
+  <b swap ref, mkWaitingBoth ref, b>
+  // wc, code, state
+  null // no libraries
+  // Libs{ x{ABACABADABACABA} drop x{AAAA} s>c public_lib x{1234} x{5678} |_ s>c public_lib }Libs
+  <b b{0011} s, 3 roll ref, rot ref, swap dict, b>  // create StateInit
+  // wc, stateInit
+  dup hashu
+  // wc, stateInit, hash
+  rot swap
+  // wc, hash, stateInit
+  // stack: (stateInit: Cell) (contractAddr: (int, int))
+} : createStateInit
+
+{
+<b
+  b{01} s, // internalMsgTag ihr_disabled
+  b{1} s, // bounce
+  b{000100} s, // 0 - boundced 00 - msgAddrNone 10 - msgAddrStd 0 - anycast = nothing
+  5 roll 5 roll addr,
+  3 roll Gram,
+  // 9 - empty dict \ ihr_fee = 0 \ fwd_fee = 0 \ created_lt = 0 \created_at = 0
+  // leaving all zeros, will be filled by SENDRAWMSG
+  0 9 64 32 + + u,
+  b{11} s, // init = Just Right
+  2 roll ref, // init ref
+  b{0} s, // body = Left
+  swap <s s, // STM
+b>
+} : createInitMessage
+// ( wc addr amount init body -- msg )
+
+{ <b
+    3 pick priv>pub _assert_key B,
+    2 roll 2 roll addr,
+  b> dup hashu
+  // ( sk signedCell hash )
+  2 roll ed25519_sign_uint
+  // ( signedCell signature)
+  <b 0 32 u, swap B, swap ref, b>
+} : mkSTMBody
+// ( sk wc addr -- msg)
+// 512 + 256 + 8 + 256
+// STM = STM
+//   { signature:: Bits 512
+//   , pk: UInt256
+//   , addr: (Int8, UInt256)
+//   }
+
+{
+<b
+  b{01} s, // internalMsgTag ihr_disabled
+  b{1} s, // bounce
+  b{000100} s, // 0 - boundced 00 - msgAddrNone 10 - msgAddrStd 0 - anycast = nothing
+  4 roll 4 roll addr,
+  2 roll Gram,
+  // 9 - empty dict \ ihr_fee = 0 \ fwd_fee = 0 \ created_lt = 0 \created_at = 0
+  // leaving all zeros, will be filled by SENDRAWMSG
+  0 9 64 32 + + u,
+  b{0} s, // init = Nothing
+  b{0} s, // body = Left
+  swap <s s, // STM
+b>
+} : createMsg
+// ( wc addr amount body -- msg )
