@@ -1,14 +1,22 @@
 
-;; (channel, amount, iou, uome) 
-(slice, int, int, int) parseIou(cell in_msg, int pk) {
+;; (amount, iou, uome)
+(int, int, int) parseIou(cell in_msg, int pk) {
   var payload = checkSigned(in_msg, pk);
 
   var ps = payload.begin_parse();
 
-  var s_channel = ps~load_msg_addr();
+  var (wc, addr) = (ps~load_int(8), ps~load_uint(256));
+  var (myWc, myAddr) = parse_std_addr(my_address());
+
+  throw_unless_(
+    RawReq::AddressMismatch(),
+    (myWc == wc) & (myAddr == addr)
+    );
+
+
   var amount = ps~load_uint(120);
   var iou = ps~load_uint(248);
   var uome = ps~load_uint(248);
 
-  return (s_channel, amount, iou, uome);
+  return (amount, iou, uome);
 }

@@ -1,0 +1,35 @@
+;; msg_pk, cell
+(int, cell) parseRawReq(slice in_msg, cell globalState) {
+  var reqOp = in_msg~load_uint(32);
+  var pkn = in_msg~load_pkn();
+  var pk = pkn.pkn2pk(globalState);
+
+  var (wc, addr) = (in_msg~load_int(8), in_msg~load_uint(256));
+
+  var req = in_msg~load_ref();
+
+  var signature = in_msg~load_bits(512);
+
+  var signedCell =
+    begin_cell()
+      .store_uint(reqOp, 32)
+      .store_pkn(pkn)
+      .store_int(wc, 8)
+      .store_uint(addr, 256)
+      .store_ref(req)
+      .end_cell();
+
+   throw_unless_(
+      RawReq::BadSignature(),
+      check_signature(cell_hash(signedCell), signature, pk)
+      );
+
+  var (myWc, myAddr) = parse_std_addr(my_address());
+
+  throw_unless_(
+    RawReq::AddressMismatch(),
+    (myWc == wc) & (myAddr == addr)
+    );
+
+  return (pk, req);
+}

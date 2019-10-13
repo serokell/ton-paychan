@@ -1,3 +1,4 @@
 int ReqOp::SimpleTransfer() { return 0; }
-int ReqOp::Close()          { return 1; }
-int ReqOp::Timeout()        { return 2; }
+int ReqOp::Join()           { return 1; }
+int ReqOp::Close()          { return 2; }
+int ReqOp::Timeout()        { return 3; }

@@ -1,6 +1,5 @@
 cell getCloseReqCell(slice in_msg_body) {
-  var (_, c) = in_msg_body.load_ref();
-  return c;
+  return in_msg_body~load_ref();
 }
 
 ;; payout, maybe iou

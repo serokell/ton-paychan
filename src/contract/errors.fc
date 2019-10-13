@@ -1,11 +1,10 @@
 int UnknownReqOp()                 { return 1001; }
 
-int STM::SuppliedNotEnough1()      { return 1002; }
-int STM::SuppliedNotEnough2()      { return 1003; }
-int STM::UnknownParty()            { return 1004; }
-int STM::InvalidState()            { return 1005; }
-int STM::BadSignature()            { return 1006; }
-int STM::AddressMismatch()         { return 1007; }
+int Join::SuppliedNotEnough1()     { return 1002; }
+int Join::SuppliedNotEnough2()     { return 1003; }
+int Join::UnknownParty()           { return 1004; }
+int Join::InvalidState()           { return 1005; }
+int Join::AddressMismatch()        { return 1007; }
 
 int Close::PayoutImpossible()      { return 1101; }
 int Close::UnknownParty1()         { return 1102; }
@@ -25,6 +24,11 @@ int Util::Pk2Addr()                { return 1401; }
 int Util::Addr2Pk()                { return 1402; }
 int Util::Addr2Share()             { return 1403; }
 int Util::Pk2Share()               { return 1404; }
+
+int RawReq::BadSignature()         { return 1501; }
+int RawReq::AddressMismatch()      { return 1502; }
+
+int Iou::AddressMismatch()         { return 1601; }
 
 () throw_when(int errorCode, int cond) impure {
   if (cond) {

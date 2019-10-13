@@ -1,5 +1,5 @@
 ;; all handlers produce new LocalState as cell
-cell handle_simple_transfer(
+cell handle_join(
    slice msg_src_addr,
    int msg_value,
    int msg_pk,
@@ -17,29 +17,26 @@ cell handle_simple_transfer(
      var requesterShare = msg_pk.pk2Share(globalState);
 
      ;; supplied not enough
-     throw_when(STM::SuppliedNotEnough1(), requesterShare > msg_value);
+     throw_when(Join::SuppliedNotEnough1(), requesterShare > msg_value);
 
      return mkStateWaitingOne(msg_src_addr, msg_pk);
    } elseif (stateTag == StateTags::WaitingOne()) {
      ;; WaitingOne addr1 pk1 -> Open (OpenState addr1 addr2)
      var (stateAddr, statePk) = parseStateWaitingOne(ls);
 
-     slice addr1 = stateAddr;
-     slice addr2 = msg_src_addr;
-
-     if (statePk.pk_eq(pk1) & pk2.pk_eq(msg_pk)) {
-       throw_when(STM::SuppliedNotEnough2(), share2 > msg_value);
+     if ((statePk == pk1) & (pk2 == msg_pk)) {
+       throw_when(Join::SuppliedNotEnough2(), share2 > msg_value);
        return mkStateOpen(stateAddr, msg_src_addr);
-     } elseif (statePk.pk_eq(pk2) & pk1.pk_eq(msg_pk)) {
-       throw_when(STM::SuppliedNotEnough2(), share1 > msg_value);
+     } elseif ((statePk == pk2) & (pk1 == msg_pk)) {
+       throw_when(Join::SuppliedNotEnough2(), share1 > msg_value);
        return mkStateOpen(msg_src_addr, stateAddr);
      } else {
-       throw(STM::UnknownParty());
+       throw(Join::UnknownParty());
        return localState;
      }
    } else {
      ;; none of appropriate states for this message matches
-     throw(STM::InvalidState());
+     throw(Join::InvalidState());
      return unreachableReturn();
    }
  }

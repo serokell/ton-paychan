@@ -60,3 +60,9 @@ int pk2Share(int pk, cell globalState) {
     return 0;
   }
 }
+
+int pkn2pk(int pkn, cell globalState) {
+  var (pk1, pk2, _, _, _, _, _) =
+    parseGlobalState(globalState);
+  if (pkn == 1) { return pk1; } else { return pk2; }
+}

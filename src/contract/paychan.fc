@@ -3,7 +3,7 @@
 ;; SPDX-License-Identifier: MPL-2.0
 
 () recv_external (slice in_msg) impure {
-  accept_message();
+ ;; ignore all external messages
 }
 
 ;; slice is input in ton/crypto/smartcont/wallet-code.fc
@@ -18,22 +18,33 @@
   ;; need comments in simple transfer message
 
   var msg_src_addr = cs~load_msg_addr();
-  var op = in_msg~load_uint(32);
+  var (_, op) = in_msg.load_uint(32);
   var (globalState, localState) = getState();
 
   if (op == ReqOp::SimpleTransfer()) {
-    var msg_pk = parseSMT(in_msg);
+    return ();
+  } elseif (op == ReqOp::Join()) {
+    var (msg_pk, _) = parseRawReq(in_msg, globalState);
     var newLocalState =
-      handle_simple_transfer(msg_src_addr, msg_value, msg_pk, globalState, localState);
+      handle_join(
+        msg_src_addr,
+        msg_value,
+        msg_pk,
+        globalState,
+        localState
+        );
     putLocalState(newLocalState);
   } elseif (op == ReqOp::Close()) {
-    var closeReq = getCloseReqCell(in_msg);
+    var (msg_pk, closeReqRef) = parseRawReq(in_msg, globalState);
+    var closeReq = getCloseReqCell(closeReqRef.begin_parse());
     var newLocalState =
-      handle_close(msg_src_addr, closeReq, globalState, localState);
+      handle_close(msg_pk, closeReq, globalState, localState);
     putLocalState(newLocalState);
   } elseif (op == ReqOp::Timeout()) {
+    ;; TODO: what to sign in TimeoutReq
+    var (msg_pk, _) = parseRawReq(in_msg, globalState);
     var newLocalState =
-      handle_timeout(msg_src_addr, globalState, localState);
+      handle_timeout(msg_pk, globalState, localState);
     putLocalState(newLocalState);
   } else {
     throw(UnknownReqOp());

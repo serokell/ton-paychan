@@ -9,7 +9,7 @@ int isPayoutImpossible(int reqShare, int reqPayout, int otherShare) {
     );
 }
 
-cell createStateClosing(int reqPk, cell localState, cell closeReq) {
+cell createStateClosing(int reqPk, cell localState, cell closeReq) impure {
    return mkStateClosing(
      reqPk,
      getOpenState(localState),
@@ -20,7 +20,7 @@ cell createStateClosing(int reqPk, cell localState, cell closeReq) {
 
 cell payoutMatches(
   slice addr1, slice addr2,
-  int payout1, int payout2,
+  int payout1, payout2,
   int share1, int share2) impure {
 
   if (- payout1 > share2) {
@@ -36,14 +36,13 @@ cell payoutMatches(
 }
 
 cell handle_close(
-  slice msg_src_addr,
+  int msg_pk,
   cell closeReq,
   cell globalState,
   cell localState) impure {
 
   var ls = localState.begin_parse();
   var (_, stateTag) = ls.load_StateTag();
-
 
   var (pk1, pk2, share1, share2, _, _, _)
     = parseGlobalState(globalState);
@@ -52,17 +51,14 @@ cell handle_close(
 
   if (stateTag == StateTags::Open()) {
     ;; Open -> Closing
-
-    var (addr1, addr2) = parseOpenState(ls);
-
-    if (msg_src_addr.slice_eq(addr1)) {
+    if (msg_pk == pk1) {
       ;; current msg from party1
       ;; reqShare = share1;
       ;; reqPk = pk1;
       ;; otherShare = share2;
       throw_if_payoutImpossible(share1, payout, share2);
       return createStateClosing(pk1, localState, closeReq);
-    } elseif (msg_src_addr.slice_eq(addr2)) {
+    } elseif (msg_pk == pk2) {
       ;; current msg from party2
       ;; reqShare = share2;
       ;; reqPk = pk2;
@@ -83,7 +79,7 @@ cell handle_close(
     if (payout + prevPayout == 0) {
       var (addr1, addr2) = parseOpenState(openState.begin_parse());
 
-      if (msg_src_addr.slice_eq(addr1)) {
+      if (msg_pk == pk1) {
         ;; current msg from party1
         ;; payout1 = payout;
         ;; payout2 = prevPayout;
@@ -92,7 +88,7 @@ cell handle_close(
           payout, prevPayout,
           share1, share2
           );
-      } elseif (msg_src_addr.slice_eq(addr2)) {
+      } elseif (msg_pk == pk2) {
         ;; current msg from party2
         ;; payout1 = prevPayout;
         ;; payout2 = payout;

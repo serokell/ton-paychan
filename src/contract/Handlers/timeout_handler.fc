@@ -1,37 +1,43 @@
 cell handle_timeout(
-  slice msg_src_addr,
+  int msg_pk,
   cell globalState,
   cell localState) impure {
 
   var ls = localState.begin_parse();
   var (_, stateTag) = ls.load_StateTag();
 
-  var (pk1, pk2, share1, share2, timeout, _, _)
+  var (pk1, pk2, share1, share2, timeout, fine, _)
     = parseGlobalState(globalState);
 
-  if (stateTag == StateTags::Closing()) {
+  if (stateTag == StateTags::WaitingBoth()) {
+    ;; TODO: send all funds to contract with addr 0?
+    return terminateContract();
+  } elseif (stateTag == StateTags::WaitingOne()) {
+    var (addr, pk) = parseStateWaitingOne(ls);
+    var share = pk.pk2Share(globalState);
+    proceedPayout(addr, share + fine);
+    return terminateContract();
+  } elseif (stateTag == StateTags::Closing()) {
     var (prevReqPk, openState, closeReq, prevTimestamp) =
       parseStateClosing(ls);
 
-    var reqPk = msg_src_addr.addr2Pk(globalState, openState);
-
     ;; timeout from other party
-    throw_when(Timeout::WrongParty(), ~ reqPk.pk_eq(prevReqPk));
+    throw_unless_(Timeout::WrongParty(), msg_pk == prevReqPk);
 
     var (addr1, addr2) = parseOpenState(openState.begin_parse());
 
     var (reqPayout, _) = parseCloseReq(closeReq);
     if ((now() - prevTimestamp) > timeout) {
-      if (msg_src_addr.slice_eq(addr1)) {
+      if (msg_pk == pk1) {
         proceedPayout2(
-          addr1, share1 + reqPayout,
+          addr1, share1 + reqPayout + (2 * fine),
           addr2,  share2 - reqPayout
           );
         return terminateContract();
-      } elseif (msg_src_addr.slice_eq(addr2)) {
+      } elseif (msg_pk = pk2) {
         proceedPayout2(
           addr1, share1 - reqPayout,
-          addr2, share2 + reqPayout
+          addr2, share2 + reqPayout + (2 * fine)
           );
         return terminateContract();
       } else {
