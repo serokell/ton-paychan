@@ -47,7 +47,9 @@ library Handlers_new
 
   cmdline_getarg_int  // fineAmount (grams)
 
-  now  // nonce
+  // XXX: Undocumented extra argument for debugging
+  // nonce
+  { (number) 1 = not abort_usage"Not an integer" } { now } cmdline_getarg'
 
   mkGlobalState
   // ( theirKeyName ourKeyName ourSk globalState )

@@ -49,15 +49,37 @@ variable _cli_usage
 //
 
 { _next_arg @
-  dup $# > abort_usage"Not enough command line arguments"
-  _next_arg 1+!
-  $()
-} : cmdline_getarg
+  $# >
+    { nip
+      execute
+    }
+    { drop
+      _next_arg @
+      _next_arg 1+!
+      $()
+      swap execute
+    }
+  cond
+} : cmdline_getarg'
+// ( okCont failCont -- ? )
 
-{ cmdline_getarg
-  (number)
-  1 = not abort_usage"Not an integer"
+{ { abort_usage"Not enough command line arguments" }
+  cmdline_getarg'
+} : cmdline_fmapgetarg
+// ( okCont -- ? )
+
+{ ' true ' false cmdline_getarg'
+} : cmdline_trygetarg
+// ( -- (str true | false) )
+
+{ 'nop cmdline_fmapgetarg
+} : cmdline_getarg
+// ( -- str )
+
+{ { (number) 1 = not abort_usage"Not an integer" }
+  cmdline_fmapgetarg
 } : cmdline_getarg_int
+// ( -- n )
 
 { cmdline_getarg
   _cur_prefix @ +"_" swap $+
