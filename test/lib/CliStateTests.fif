@@ -15,6 +15,42 @@
 } @test mkEmptyPaymentsState
 
 { 123 456 <b 10 32 i, b> 788 mkPaymentsStateIou
+  111 swap addPaymentsStateWeOwe
+  dup getPaymentsStateWeOwe 234 = not abort"Wrong weOwe"
+  dup getPaymentsStateTheyOwe 456 = not abort"Wrong theyOwe"
+  dup getPaymentsStateMissingAmount 788 = not abort"Wrong missingAmount"
+      getPaymentsStateIou not abort"Missing iou"
+      <s 32 i@ 10 = not abort"Wrong iou"  // not really iou
+} @test addPaymentsStateWeOwe
+
+{ 123 456 <b 10 32 i, b> 788 mkPaymentsStateIou
+  111 swap addPaymentsStateTheyOwe
+  dup getPaymentsStateWeOwe 123 = not abort"Wrong weOwe"
+  dup getPaymentsStateTheyOwe 567 = not abort"Wrong theyOwe"
+  dup getPaymentsStateMissingAmount 788 = not abort"Wrong missingAmount"
+      getPaymentsStateIou not abort"Missing iou"
+      <s 32 i@ 10 = not abort"Wrong iou"  // not really iou
+} @test addPaymentsStateTheyOwe
+
+{ 123 456 788 mkPaymentsState
+  <b 20 32 i, b> swap setPaymentsStateIou
+  dup getPaymentsStateMissingAmount 788 = not abort"Wrong missingAmount"
+  dup getPaymentsStateWeOwe 123 = not abort"Wrong weOwe"
+  dup getPaymentsStateTheyOwe 456 = not abort"Wrong theyOwe"
+      getPaymentsStateIou not abort"Missing iou"
+      <s 32 i@ 20 = not abort"Wrong iou"  // not really iou
+} @test setPaymentsStateIou1
+
+{ 123 456 <b 10 32 i, b> 788 mkPaymentsStateIou
+  <b 20 32 i, b> swap setPaymentsStateIou
+  dup getPaymentsStateMissingAmount 788 = not abort"Wrong missingAmount"
+  dup getPaymentsStateWeOwe 123 = not abort"Wrong weOwe"
+  dup getPaymentsStateTheyOwe 456 = not abort"Wrong theyOwe"
+      getPaymentsStateIou not abort"Missing iou"
+      <s 32 i@ 20 = not abort"Wrong iou"  // not really iou
+} @test setPaymentsStateIou2
+
+{ 123 456 <b 10 32 i, b> 788 mkPaymentsStateIou
   111 swap addPaymentsStateMissingAmount
   dup getPaymentsStateMissingAmount 899 = not abort"Wrong missingAmount"
   dup getPaymentsStateWeOwe 123 = not abort"Wrong weOwe"

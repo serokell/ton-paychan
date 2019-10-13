@@ -1,0 +1,73 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library String  // String manipulation utils
+
+
+// Split the string by the character, so that
+// if `s1 c splitAt` returns `s2 s3`, then
+// `s1 === s2 + c + s3` (and `s2` does not contain `c`),
+// if such a split possible, or else returns `s1 ""`
+// `c` should be an ASCII codepoint as an Integer
+{ chr swap <# swap
+  // ( sep "" str )
+  { dup $len 0 >
+      { 1 $| swap dup 4 pick $=
+          { drop rot drop true }
+          { rot swap $+ swap false }
+        cond
+      }
+      { rot drop true }
+    cond
+  } until
+} : splitAt
+// ( str c -- str str )
+
+
+//
+// Hex
+//
+
+' (0x.) : u>hex$
+// ( lenBytes u -- str )
+
+// Converts a single hex digit to the corresponding number.
+{ <b swap $, b> <s 8 u@+ s>
+  dup 97 >= over 103 < and
+    { 87 - true }
+    { dup 48 >= over 58 < and
+        { 48 - true }
+        { drop false }
+      cond
+    }
+  cond
+} : undigit
+// ( str -- u -1 or 0 )
+
+{ 0 swap
+  { dup $len 0>
+      { 1 $| swap dup undigit
+          { nip
+            rot
+            16 * +
+            swap
+            false
+          }
+          { swap $+ true }
+        cond
+      }
+      { true }
+    cond
+  }
+  until
+} : hex$>u+
+// ( str -- u str' )
+
+{ hex$>u+
+  $len 0=
+    { true }
+    { drop false }
+  cond
+} : hex$>u
+// ( str -- u -1 or 0 )

@@ -1,0 +1,80 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+"Test.fif" include
+"String.fif" include
+
+@tests String.fif
+
+{ "hello:world" char : splitAt
+  "world" $= not abort"Wrong second string"
+  "hello" $= not abort"Wrong first string"
+} @test splitAtSimple
+
+{ "hello:world:foo" char : splitAt
+  "world:foo" $= not abort"Wrong second string"
+  "hello" $= not abort"Wrong first string"
+} @test splitAtSimple2
+
+{ "hello:world:foo" char + splitAt
+  $len 0= not abort"Non-empty second string"
+  "hello:world:foo" $= not abort"Wrong first string"
+} @test splitAtNotFound
+
+{ "" char + splitAt
+  $len 0= not abort"Non-empty second string"
+  $len 0= not abort"Non-empty first string"
+} @test splitAtEmpty
+
+
+{ "0" undigit
+  not abort"Unexpected failure"
+  0 = not abort"Wrong digit"
+} @test undigit-0
+
+{ "5" undigit
+  not abort"Unexpected failure"
+  5 = not abort"Wrong digit"
+} @test undigit-5
+
+{ "a" undigit
+  not abort"Unexpected failure"
+  10 = not abort"Wrong digit"
+} @test undigit-a
+
+{ "f" undigit
+  not abort"Unexpected failure"
+  15 = not abort"Wrong digit"
+} @test undigit-e
+
+{ "g" undigit
+  abort"Should fail"
+} @test undigit-g
+
+{ ":" undigit
+  abort"Should fail"
+} @test undigit-:
+
+{ "/" undigit
+  abort"Should fail"
+} @test undigit-/
+
+{ "a" hex$>u
+  not abort"Unexpcted failure"
+  10 = not abort"Wrong number"
+} @test hex-a
+
+{ "3d" hex$>u
+  not abort"Unexpcted failure"
+  61 = not abort"Wrong number"
+} @test hex-3d
+
+{ "dabface" hex$>u
+  not abort"Unexpcted failure"
+  229374670 = not abort"Wrong number"
+} @test hex-dabface
+
+{ "dabfoo" hex$>u
+  abort"Should fail"
+} @test hex-dabfoo

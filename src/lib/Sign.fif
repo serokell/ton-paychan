@@ -13,7 +13,7 @@ library Sign  // Manipulating signed data
 // the original cell in its first reference.
 
 { <s ref@
-} : getSignedData  // (signed - cell)
+} : getSignedData!  // (signed - cell)
 // Return the data that was signed.
 // WARNING: Does not actually check the signature!
 
@@ -23,7 +23,7 @@ library Sign  // Manipulating signed data
   swap rot  // (signed hash signature pk)
   ed25519_chksign  // (signed bool)
   dup
-  { swap getSignedData swap } if
+  { swap getSignedData! swap } if
 } : checkSignedQ  // (signed pk - cell true | false)
 // Check the signature and extract the signed data.
 // Returns data followed by `true` if the signature was correct,

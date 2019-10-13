@@ -1,0 +1,151 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+"Address.fif" include
+"Iou.fif" include
+
+"../CliState.fif" include
+
+
+' cmdline_dispatch : cli_payment
+
+{ cmdline_getarg  // channel address
+  hex$>addr' { fail"Invalid address" } ifnot
+
+  cmdline_getarg  // amount
+  (number) 1 = { fail"Amount must be an integer" } ifnot
+  dup 0> { fail"Amount must be positive" } ifnot
+
+  // ( wc addr amount )
+
+  -rot loadCliStateNice
+  // ( amount cliStateNice )
+  dup 2 -roll
+  // ( cliStateNice amount cliStateNice )
+  parseCliStateNice
+  // ( cliStateNice amount cliState ourPkName theirPkName )
+
+  drop load-key-pair drop
+  // ( cliStateNice amount cliState ourSk )
+  swap
+  // ( cliStateNice amount ourSk cliState )
+
+  parseCliState
+  // ( cliStateNice amount ourSk wc addr globalState paymentsState )
+  over 7 -roll
+  // ( globalState cliStateNice amount ourSk wc addr globalState paymentsState )
+  swap getGlobalStateShare1 swap
+  // ( globalState cliStateNice amount ourSk wc addr ourShare paymentsState )
+
+  5 pick swap addPaymentsStateWeOwe
+  // ( globalState cliStateNice amount ourSk wc addr ourShare paymentsState' )
+
+  dup -rot getPaymentsStateBalance >=
+    { fail"Payment impossible: our commitment is not large enough" } ifnot
+  // ( globalState cliStateNice amount ourSk wc addr paymentsState' )
+  4 roll swap
+  // ( globalState cliStateNice ourSk wc addr amount paymentsState' )
+  dup getPaymentsStateWeOwe swap dup getPaymentsStateTheyOwe swap
+  // ( globalState cliStateNice ourSk wc addr amount weOwe theyOwe paymentsState' )
+  6 -roll mkIou
+  // ( globalState cliStateNice paymentsState' iou )
+  3 roll 2 pick 2 pick .iou
+  // ( cliStateNice paymentsState' iou )
+  saveIou
+  // ( cliStateNice paymentsState' )
+  over getCliStateNiceCliState setCliStatePaymentsState
+  swap setCliStateNiceCliState
+  updateCliStateNice
+} : cli_payment_send
+
+
+{ loadIou
+  // ( iou )
+  dup getSignedData! parseIouPayload drop drop drop
+  // ( iou wc addr )
+  loadCliStateNice getCliStateNiceCliState parseCliState
+  // ( iou wc addr globalState paymentsState )
+  4 -roll 4 -roll drop drop
+  // ( globalState paymentsState iou )
+  .iou
+} : cli_payment_info
+
+
+{ parseIouPayload 4 roll drop 3 roll drop
+  // ( iou cliState amount theyOwe' weOwe' )
+
+  3 roll parseCliState
+  // ( iou amount theyOwe' weOwe' wc addr globalState paymentsState ... )
+  //   7   6      5        4      3  2    1           0
+
+  5 pick 1 pick getPaymentsStateTheyOwe -
+  // ( ... theyOweDelta )
+  dup 0= { 7 pick 0= { fail"Duplicate payment" } ifnot } if
+  dup 0>=
+    { dup 8 pick -
+      // ( ... theyOweDelta extraAmount )
+      dup 0< { fail"The payment is self-inconsistent" } if
+      ?dup
+        { ."Note: some incoming payments are missing." cr
+          rot addPaymentsStateMissingAmount swap
+        }
+      if
+      // ( ... theyOweDelta )
+      swap addPaymentsStateTheyOwe
+      // ( ... )
+
+      dup getPaymentsStateTheyOwe over getPaymentsStateWeOwe -
+      2 pick getGlobalStateShare2
+      > { fail"They are trying to send more than their share allows" } if
+
+      7 pick swap setPaymentsStateIou
+    }
+    { ."Note: this appears to be a previously missing payment." cr
+      drop
+      // ( ... )
+      getPaymentsStateMissingAmount 7 pick
+      2dup < { fail"The amount is larger than total missing" } if
+      - setPaymentsStateMissingAmount
+    }
+  cond
+  6 pick ?dup
+    { ."Payment received. Amount = " ._ cr }
+    { ."This was a state sync message. State synchronised." cr }
+  cond
+
+  mkCliState
+  4 -roll drop drop drop drop
+} : _receivePayment
+// ( iou cliState iouPayload -- cliState' )
+
+{ 1 pick getCliStatePaymentsState getPaymentsStateWeOwe
+  1 pick getIouPayloadUome
+  -
+  dup 0< { fail"Illegal payment state" } if
+  0> { ."Note: the other party is missing some of our payments." } if
+
+  _receivePayment
+} : _processPayment
+// ( iou cliState iouPayload -- cliState' )
+
+{ cmdline_getarg  // channel address
+  hex$>addr' { fail"Invalid address" } ifnot
+  loadCliStateNice
+  dup parseCliStateNice swap drop load-key-public
+  // ( cliStateNice cliState theirPk )
+
+  loadIou
+  // ( cliStateNice cliState theirPk iou )
+  dup 3 -roll
+  // ( cliStateNice iou cliState theirPk iou )
+
+  swap checkSigned
+  // ( cliStateNice iou cliState iouPayload )
+
+  _processPayment
+  // ( cliStateNice cliState' )
+
+  swap setCliStateNiceCliState
+  updateCliStateNice
+} dup : cli_payment_recv : cli_payment_receive

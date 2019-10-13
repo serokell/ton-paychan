@@ -1,0 +1,58 @@
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library Iou  // IOUs
+
+"Address.fif" include
+"Sign.fif" include
+
+{ <b
+  5 roll 5 roll addr,
+  3 roll 120 u,
+  2 roll 248 u,
+  1 roll 248 u,
+  b>
+  swap mkSigned
+} : mkIou
+// ( sk wc addr amount iou uome -- iou )
+
+{ <s
+  addr@+
+  120 u@+
+  248 u@+
+  248 u@+
+  s>
+} : parseIouPayload
+// ( iouPayload -- wc addr amount iou uome )
+
+{ <s
+  addr@+ -rot drop drop
+  120 u@
+} : getIouPayloadAmount
+// ( iouPayload -- amount )
+
+{ <s
+  addr@+ -rot drop drop
+  120 u@+ nip
+  248 u@
+} : getIouPayloadIou
+
+{ <s
+  addr@+ -rot drop drop
+  120 u@+ nip
+  248 u@+ nip
+  248 u@
+} : getIouPayloadUome
+
+{ 2 boc+>B
+  "paychan.pay"
+  dup ."Saving payment to file `" type ."`" cr B>file
+} : saveIou
+// ( iou -- )
+
+{ "paychan.pay"
+  dup ."Loading payment from file `" type ."`" cr file>B
+  B>boc
+} : loadIou
+// ( -- iou )

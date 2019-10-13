@@ -9,11 +9,19 @@ library Handlers_new
 "../CliState.fif" include
 
 
-{ 2 boc+>B
+{ <b swap ref, -rot addr, b>
+  2 boc+>B
   "paychan.join"
   dup ."Saving join request to file `" type ."`" cr B>file
 } : _saveJoinRequest
-// ( globalState -- )
+// ( wc addr globalState -- )
+
+{ "paychan.join"
+  dup ."Loading join request from file `" type ."`" cr file>B
+  B>boc
+  <s addr@+ ref@+ swap s>
+} : _loadJoinRequest
+// ( -- wc addr globalState )
 
 
 ' cmdline_dispatch : cli_chan
@@ -39,7 +47,9 @@ library Handlers_new
 
   cmdline_getarg_int  // fineAmount (grams)
 
-  now  // nonce
+  // XXX: Undocumented extra argument for debugging
+  // nonce
+  { (number) 1 = not abort_usage"Not an integer" } { now } cmdline_getarg'
 
   mkGlobalState
   // ( theirKeyName ourKeyName ourSk globalState )
@@ -53,14 +63,69 @@ library Handlers_new
 
   6 roll 6 roll swap mkCliStateNice
   // ( ourSk wc addr globalState cliStateNice )
-  3 roll 3 roll 2dup 5 -roll 5 -roll
-  // ( ourSk wc addr globalState cliStateNice wc addr )
   saveCliStateNice
   // ( ourSk wc addr globalState )
 
-  dup _saveJoinRequest
-  // ( ourSk wc addr globalState )
+  _saveJoinRequest
+  // ( ourSk )
 
   // TODO[gpevnev]: output the deployment msg
   // cmdline_getarg_int  // extra for fuel (grams)
 } :cmdline cli_chan_new
+
+{ ."Joining a channel..." cr
+  cmdline_getarg dup load-key-pair nip
+  cmdline_getarg dup load-key-public
+  _loadJoinRequest
+  // ( ourKeyName ourPk theirKeyname theirPk wc addr globalState )
+
+  dup getGlobalStatePk2 6 roll B=
+    { fail"Our public key does not match the one in the request" } ifnot
+  dup getGlobalStatePk1 4 roll B=
+    { fail"Their public key does not match the one in the request" } ifnot
+  // ( ourKeyName theirKeyName wc addr globalState )
+
+  mkGlobalStateMirror mkEmptyPaymentsState mkCliState
+  // ( ourKeyName theirKeyName cliState )
+
+  swap rot swap mkCliStateNice
+  saveCliStateNice
+} :cmdline cli_chan_join
+
+{ cmdline_getarg  // channel address
+  hex$>addr' { fail"Invalid address" } ifnot
+  loadCliStateNice
+  .cliStateNice
+} :cmdline cli_chan_info
+
+{ cmdline_getarg  // channel address
+  hex$>addr' { fail"Invalid address" } ifnot
+  loadCliStateNice parseCliStateNice drop
+  // ( cliState ourPkName )
+  load-key-pair drop swap
+  // ( ourSk cliState )
+
+  getCliStatePaymentsState
+  // ( ourSk paymentsState )
+
+  dup getPaymentsStateBalance swap getPaymentsStateIou
+  // ( ourSk balance (iou true | false) )
+
+  // TODO[gpevnev]: prepare a close message
+} :cmdline cli_chan_close
+
+{ cmdline_getarg  // channel address
+  hex$>addr' { fail"Invalid address" } ifnot
+  loadCliStateNice parseCliStateNice drop
+  // ( cliState ourPkName )
+  load-key-pair drop swap
+  // ( ourSk cliState )
+
+  parseCliState swap drop 0 swap
+  // ( ourSk wc addr 0 paymentsState )
+  dup getPaymentsStateWeOwe swap getPaymentsStateTheyOwe
+  mkIou
+
+  ."State sync message will be formatted as a payment with amount = 0." cr
+  saveIou
+} :cmdline cli_chan_sync

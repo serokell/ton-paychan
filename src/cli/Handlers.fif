@@ -4,15 +4,13 @@
 
 "handlers/key.fif" include
 "handlers/chan.fif" include
-"handlers/pay.fif" include
-"handlers/receive.fif" include
+"handlers/payment.fif" include
 
 { ."Usage:" cr
   ."  " $0 type
     ." [ key gen"
-    ." | chan [new | join | close | info ]"
-    ." | pay"
-    ." | receive"
+    ." | chan [ new | join | close | info | sync ]"
+    ." | payment [ send | recv | info ]"
     ." ]" cr
   cr
   ."  Generate a new key pair:" cr
@@ -48,15 +46,26 @@
     ." <channel address>"
     cr
   cr
+  ."  Send a state synchronisation message:" cr
+    ."    chan sync"
+    ." <channel address>"
+    cr
+    ."  (Writes state sync message to `paychan.pay`)" cr
+  cr
   ."  Make a payment through a payment channel:" cr
-    ."    pay"
+    ."    payment send"
     ." <channel address>"
     ." <amount>"
     cr
     ."  (Writes off-chain transaction to `paychan.pay`)" cr
   cr
+  ."  Show infomation about a pending incoming payment:" cr
+    ."    payment info"
+    cr
+    ."  (Reads off-chain transaction from `paychan.pay`)" cr
+  cr
   ."  Receive a payment through a payment channel:" cr
-    ."    receive"
+    ."    payment receive"
     ." <channel address>"
     cr
     ."  (Reads off-chain transaction from `paychan.pay`)" cr

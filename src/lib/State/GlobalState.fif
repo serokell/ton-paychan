@@ -21,6 +21,18 @@ library GlobalState  // Payment channel global (immutable) state
 } : mkGlobalState
 // ( pk1 pk2 share1 share2 timeout fine nonce -- globalState )
 
+// Switches keys and shares
+{ <s <b swap
+  32 B@+ 32 B@+ -rot 3 roll swap B, swap B, swap
+  120 u@+ 120 u@+ -rot 3 roll swap 120 u, swap 120 u, swap
+  32 u@+ -rot 32 u, swap
+  120 u@+ -rot 120 u, swap
+  64 u@+ -rot 64 u, swap
+  s>
+  b>
+} : mkGlobalStateMirror
+// ( globalState -- globalState' )
+
 { <s
   32 B@+
   32 B@+
@@ -32,3 +44,29 @@ library GlobalState  // Payment channel global (immutable) state
   s>
 } : parseGlobalState
 // ( globalState -- pk1 pk2 share1 share2 timeout fine nonce )
+
+{ <s
+  32 B@
+} : getGlobalStatePk1
+// ( globalState -- pk1 )
+
+{ <s
+  32 B@+ nip
+  32 B@
+} : getGlobalStatePk2
+// ( globalState -- pk2 )
+
+{ <s
+  32 B@+ nip
+  32 B@+ nip
+  121 i@
+} : getGlobalStateShare1
+// ( globalState -- share1 )
+
+{ <s
+  32 B@+ nip
+  32 B@+ nip
+  121 i@+ nip
+  121 i@
+} : getGlobalStateShare2
+// ( globalState -- share2 )

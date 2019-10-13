@@ -7,7 +7,10 @@ library CliState  // The state of the cli tool
 
 "TonUtil.fif" include
 
+"Iou.fif" include
 "State/GlobalState.fif" include
+
+"Address.fif" include
 
 //
 // PaymentsState
@@ -39,15 +42,58 @@ library CliState  // The state of the cli tool
 } : getPaymentsStateWeOwe
 // ( paymentsState -- weOwe )
 
+{ <s <b swap
+  248 u@+ -rot drop rot 248 u, swap
+  248 u@+ -rot 248 u, swap
+  248 u@+ -rot 248 u, swap
+  ref@? { ref, } if
+  b>
+} : setPaymentsStateWeOwe
+// ( weOwe paymentsState -- paymentsState' )
+
+{ dup
+  getPaymentsStateWeOwe
+  rot
+  +
+  swap setPaymentsStateWeOwe
+} : addPaymentsStateWeOwe
+// ( delta paymentsState -- paymentsState' )
+
 { <s
   248 u@+ nip
   248 u@
 } : getPaymentsStateTheyOwe
-// paymentsState -> theyOwe
+// ( paymentsState -- theyOwe )
+
+{ <s <b swap
+  248 u@+ -rot 248 u, swap
+  248 u@+ -rot drop rot 248 u, swap
+  248 u@+ -rot 248 u, swap
+  ref@? { ref, } if
+  b>
+} : setPaymentsStateTheyOwe
+// ( theyOwe paymentsState -- paymentsState' )
+
+{ dup
+  getPaymentsStateTheyOwe
+  rot
+  +
+  swap setPaymentsStateTheyOwe
+} : addPaymentsStateTheyOwe
+// ( delta paymentsState -- paymentsState' )
 
 { <s ref@?
 } : getPaymentsStateIou
-// ( paymentsState -- (iou -1 | 0) )
+// ( paymentsState -- (iou true | false) )
+
+{ <s <b swap
+  248 u@+ -rot 248 u, swap
+  248 u@+ -rot 248 u, swap
+  248 u@ 248 u,
+  swap ref,
+  b>
+} : setPaymentsStateIou
+// ( iou paymentsState -- paymentsState' )
 
 { <s
   248 u@+ nip
@@ -63,7 +109,7 @@ library CliState  // The state of the cli tool
   ref@? { ref, } if
   b>
 } : setPaymentsStateMissingAmount
-// missingAmount paymentsState -> paymentsState'
+// ( missingAmount paymentsState -- paymentsState' )
 
 { dup
   getPaymentsStateMissingAmount
@@ -72,6 +118,17 @@ library CliState  // The state of the cli tool
   swap setPaymentsStateMissingAmount
 } : addPaymentsStateMissingAmount
 // ( delta paymentsState -- paymentsState' )
+
+{ dup getPaymentsStateTheyOwe
+  swap getPaymentsStateWeOwe
+  -
+} : getPaymentsStateBalance
+// ( paymentsState -- balance )
+
+{ dup 0> { ."+" } if
+  ._
+} : .balance
+// ( i -- )
 
 
 //
@@ -87,12 +144,31 @@ library CliState  // The state of the cli tool
 // ( wc addr globalState paymentsState -- cliState )
 
 { <s
-  8 i@+ 256 u@+
+  addr@+
   ref@+ swap
   ref@+ swap
   s>
 } : parseCliState
 // ( cliState -- wc addr globalState paymentsState )
+
+{ <s
+  8 i@+ 256 u@
+} : getCliStateAddr
+// ( cliState -- wc addr )
+
+{ <s
+  ref@+ drop
+  ref@
+} : getCliStatePaymentsState
+// ( cliState -- paymentsState )
+
+{ <s <b swap
+  addr@+ 3 -roll addr, swap
+  ref@ ref,
+  swap ref,
+  b>
+} : setCliStatePaymentsState
+// ( paymentState cliState -- cliState' )
 
 
 //
@@ -116,23 +192,95 @@ library CliState  // The state of the cli tool
 // ( cliState ourPkName theirPkName -- cliStateNice )
 
 { <s
-  ref@+
-  ref@+ dup sbits 8 / $@ swap
-  ref@+ dup sbits 8 / $@ swap
+  ref@+ swap
+  ref@+ <s dup sbits 8 / $@ swap
+  ref@+ <s dup sbits 8 / $@ swap
   s>
 } : parseCliStateNice
 // ( cliStateNice -- cliState ourPkName theirPkName )
 
-{ addr>hex$' +".state"
+{ <s
+  ref@
+} : getCliStateNiceCliState
+// ( cliStateNice -- cliState )
+
+{ parseCliStateNice
+  rot drop
+  mkCliStateNice
+} : setCliStateNiceCliState
+// ( cliState cliStateNice -- cliStateNice' )
+
+{ dup getCliStateNiceCliState getCliStateAddr addr>hex$' +".state"
+  swap 2 boc+>B swap
+  B>file
+} : updateCliStateNice
+// ( cliStateNice -- )
+
+{ dup getCliStateNiceCliState getCliStateAddr addr>hex$' +".state"
   dup file-exists? abort"State file for this channel already exists?!"
   swap 2 boc+>B swap
   dup ."Saving channel state to file `" type ."`" cr B>file
 } : saveCliStateNice
-// ( cliStateNice wc addr -- )
+// ( cliStateNice -- )
 
-{
-  addr>hex$ +".state"
+{ addr>hex$' +".state"
+  dup file-exists? not abort"State file for this channel does not exist"
   file>B
   B>boc
 } : loadCliStateNice
 // ( wc addr -- cliStateNice )
+
+{ parseCliStateNice
+  swap ."Keys: " type ." - " type cr
+
+  parseCliState
+  swap
+  parseGlobalState
+  drop
+  ."Shares: " 3 roll ._ ." - " 2 roll ._ cr
+  1 roll ."Timeout: " ._ ." (fine: " ._ .")" cr
+  cr
+  drop drop
+  dup dup getPaymentsStateTheyOwe swap dup getPaymentsStateWeOwe
+  swap getPaymentsStateBalance ."Balance: " .balance ." (" ._ ." - " ._ .")" cr
+  getPaymentsStateMissingAmount ."Missing: " ._ cr
+  drop drop
+} : .cliStateNice
+// ( cliStateNice -- )
+
+
+//
+// IOU utils
+//
+
+{ parseIouPayload drop
+  3 roll 3 roll
+  ."Payment: (channel = " .addr' .")" cr
+  swap
+  ."  Amount = " ._ cr
+  - swap { negate } ifnot
+  ."  New balance = " .balance cr
+} : .iouPayload
+// ( outgoing? othersOwe iouPayload -- )
+
+{ 2 pick getGlobalStatePk1 checkSignedQ
+    { swap getPaymentsStateTheyOwe swap
+      true -rot
+      .iouPayload
+      ."Outgoing ->" cr
+    }
+    {
+      2 pick getGlobalStatePk2 checkSignedQ
+        { swap getPaymentsStateWeOwe swap
+          false -rot
+          .iouPayload
+          ."<- Incoming" cr
+        }
+        { fail"Could not verify the signature"
+        }
+      cond
+    }
+  cond
+  drop
+} : .iou
+// ( globalState paymentsState iou -- )
