@@ -20,20 +20,21 @@ cell createStateClosing(int reqPkn, cell localState, cell closeReq) impure {
 
 cell payoutMatches(
   slice addr1, slice addr2,
-  int payout1, int payout2,
+  int payout,
   int share1, int share2) impure {
 
-  if (- payout1 > share2) {
-    payout1 = - share2;
+  if ((payout < 0) & (- payout > share1)) {
+    payout = - share1;
   }
 
-  if (- payout2 > share1) {
-    payout2 = - share1;
+  if ((payout > 0) & (payout > share2)) {
+    payout = share2;
   }
 
-  proceedPayout2(addr1, share1 + payout1, addr2, share2 + payout2);
+  proceedPayout2(addr1, share1 + payout, addr2, share2 - payout);
   return terminateContract();
 }
+
 ;; iou, iou_ok
 (int, int) parseMIou(cell miou, int pk) impure {
   var s = miou.begin_parse();
@@ -145,27 +146,16 @@ cell handle_close(
     var (prevPayout, prevMIou) = parseCloseReq(prevCloseReq);
     var (addr1, addr2) = parseOpenState(openState.begin_parse());
 
-    if (payout + prevPayout == 0) {
+    if (msg_pkn == 2) {
+      payout = - payout;
+    }
 
-      if (msg_pkn == 1) {
-        ;; current msg from party1
-        ;; payout1 = payout;
-        ;; payout2 = prevPayout;
-        return payoutMatches(
-          addr1, addr2,
-          payout, prevPayout,
-          share1, share2
-          );
-      } else {
-        ;; current msg from party2
-        ;; payout1 = prevPayout;
-        ;; payout2 = payout;
-        return payoutMatches(
-          addr1, addr2,
-          prevPayout, payout,
-          share1, share2
+    if (payout == prevPayout) {
+      return payoutMatches(
+        addr1, addr2,
+        payout,
+        share1, share2
         );
-      }
     } else {
       if (msg_pkn == 1) {
         return disputeOccured(
