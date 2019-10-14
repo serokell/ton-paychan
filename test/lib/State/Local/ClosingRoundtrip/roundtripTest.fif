@@ -5,10 +5,10 @@
 
 "roundtripTest.asm.gen" include constant contract
 
-{ <b 12345 256 u, b> <s } : requesterPk
+{ 12345 } : requesterPk
 { <b 5678 256 u, b> }     : closeReq
 { <b 456 200 u, b> }      : openState
-167 constant                timestamp 
+167 constant                timestamp
 
 
 {
@@ -21,5 +21,5 @@
   timestamp   assertIntEq
   closeReq    assertCellEq
   openState   assertCellEq
-  requesterPk assertSliceEq
+  requesterPk assertIntEq
 } @test closingRoundtrip

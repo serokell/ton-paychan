@@ -1,5 +1,5 @@
 _ main(
-  slice requesterPk,
+  int requesterPk,
   cell openState,
   cell closeReq,
   int timestamp) {

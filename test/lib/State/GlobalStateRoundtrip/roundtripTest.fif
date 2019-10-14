@@ -7,8 +7,8 @@
 
 
 {
-  <b 12345 256 u, b> <s // pk1
-  <b 56789 256 u, b> <s // pk2
+  12345 // pk1
+  56789 // pk2
   1 // share1
   2 // share2
   3 // timeout
@@ -21,8 +21,6 @@
   3 assertIntEq
   2 assertIntEq
   1 assertIntEq
-  256 u@+ s>
   56789 assertIntEq
-  256 u@+ s>
   12345 assertIntEq
 } @test globalStateRoundtrip

@@ -4,7 +4,7 @@ cell handle_timeout(
   cell localState) impure {
 
   var ls = localState.begin_parse();
-  var (_, stateTag) = ls.load_StateTag();
+  var stateTag = ls.preload_StateTag();
 
   var (pk1, pk2, share1, share2, timeout, fine, _)
     = parseGlobalState(globalState);

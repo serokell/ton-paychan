@@ -18,7 +18,7 @@
   ;; need comments in simple transfer message
 
   var msg_src_addr = cs~load_msg_addr();
-  var (_, op) = in_msg.load_uint(32);
+  var op = in_msg.preload_uint(32);
   var (globalState, localState) = getState();
 
   if (op == ReqOp::SimpleTransfer()) {

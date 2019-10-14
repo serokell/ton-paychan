@@ -20,7 +20,7 @@ cell createStateClosing(int reqPk, cell localState, cell closeReq) impure {
 
 cell payoutMatches(
   slice addr1, slice addr2,
-  int payout1, payout2,
+  int payout1, int payout2,
   int share1, int share2) impure {
 
   if (- payout1 > share2) {
@@ -108,7 +108,7 @@ cell handle_close(
   cell localState) impure {
 
   var ls = localState.begin_parse();
-  var (_, stateTag) = ls.load_StateTag();
+  var stateTag = ls.preload_StateTag();
 
   var (pk1, pk2, share1, share2, _, fine, _)
     = parseGlobalState(globalState);

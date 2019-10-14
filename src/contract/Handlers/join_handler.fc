@@ -5,11 +5,15 @@ cell handle_join(
   int msg_pk,
   cell globalState,
   cell localState) {
-   var (pk1, pk2, share1, share2, _, fine, _)
+
+  var (pk1, pk2, share1, share2, _, fine, _)
     = parseGlobalState(globalState);
-   var ls = localState.begin_parse();
-  var (_, stateTag) = ls.load_StateTag();
-   if (stateTag == StateTags::WaitingBoth()) {
+
+  var ls = localState.begin_parse();
+
+  var stateTag = ls.preload_StateTag();
+
+  if (stateTag == StateTags::WaitingBoth()) {
     ;; WaitingBoth -> WaitingOne s_addr pk
     var requesterShare = msg_pk.pk2Share(globalState);
 
@@ -18,15 +22,18 @@ cell handle_join(
       Join::SuppliedNotEnough1(),
       requesterShare + fine > msg_value
       );
-     raw_reserve(requesterShare + fine, 0); ;; TODO: figure out mode
+
+    raw_reserve(requesterShare + fine, 0); ;; TODO: figure out mode
 
     return mkStateWaitingOne(msg_src_addr, msg_pk);
   } elseif (stateTag == StateTags::WaitingOne()) {
     ;; WaitingOne addr1 pk1 -> Open (OpenState addr1 addr2)
+
     raw_reserve(share1 + share2 + (2 * fine), 0); ;; figure out mode
 
     var (stateAddr, statePk) = parseStateWaitingOne(ls);
-     if ((statePk == pk1) & (pk2 == msg_pk)) {
+
+    if ((statePk == pk1) & (pk2 == msg_pk)) {
       return mkStateOpen(stateAddr, msg_src_addr);
     } elseif ((statePk == pk2) & (pk1 == msg_pk)) {
       return mkStateOpen(msg_src_addr, stateAddr);
