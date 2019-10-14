@@ -85,14 +85,14 @@ data Signed a = MkSigned
 
 
 data IouPayload = MkIouPayload
-  { channel :: ContractAddress  -- ^ Address of the payment channel contract
+  { channel :: Address  -- ^ Address of the payment channel contract
   , amount :: UInt120  -- ^ This micro-payment amount
   , iou :: UInt248  -- ^ Total transfered to the other party
   , uome :: UInt248  -- ^ Total received from the other party
   }
 -- serialisation:
--- / channel (<= 301) / amount (<= 124) / iou (<= 253) / uome (<= 253) /
--- \ std_addr         \ varuint16       \ varuint32    \ varuint32     \
+-- / channel (= 8 + 256) / amount (<= 124) / iou (<= 253) / uome (<= 253) /
+-- \ uint8 + uint256     \ varuint16       \ varuint32    \ varuint32     \
 
 type Iou = Signed IouPayload
 ```
@@ -196,16 +196,26 @@ data ClosingState = MkClosingState
 Users can make the following requests:
 
 ```haskell
-data RawReq = RawReq
-  { pk :: PublicKey
-  , signature :: Bits 512
-  , req :: Request
+-- | Wrapper around the request that contains authentication details
+data RequestMessage = RequestMessage
+  { reqOp :: UInt32  -- ^ Request identifier
+  , pkIndex :: UInt1  -- ^ `0` for party 1 and `1` for party 2
+  , contractAddr :: Address
+  , signature :: Signature
+  , reqBody :: Request
   }
+-- serialisation:
+-- / reqOp (= 32) / pkIndex (= 1) / contractAddr (= 8 + 256) / signature (= 512) /
+-- \ std_addr     \ uint1         \ uint8 + uint256          \ bits              \
+-- ref1 = reqBody (optional)
 
 data Request
-  | MkRequestJoin Addr
-  | MkRequestClose CloseRequest
-  | MkRequestTimeout
+  = MkRequestJoin  -- ^ reqOp = 1
+  | MkRequestClose CloseRequest  -- ^ reqOp = 2
+  | MkRequestTimeout  -- ^ reqOp = 3
+-- serialisation:
+-- reqOp is serialised as part of RequestMessage
+-- the argument, if present, is stored as reqBody
 
 
 data CloseRequest = MkCloseRequest
@@ -219,10 +229,10 @@ data CloseRequest = MkCloseRequest
 The contract is initialised with its global state (which plays the role of
 configuration) and local state `MkStateWaitingBoth`. Transitions possible:
 
-* One party contributes their share -> `MkStateWaitingOne`. First, the contract
-  check that the amount contributed is enough, that is, it is not smaller than
-  this party’s share plus the fine deposit, otherwise the transaction is
-  rejected.
+* One party contributes their share (`MkRequestJoin`) -> `MkStateWaitingOne`.
+  First, the contract check that the amount contributed is enough, that is,
+  it is not smaller than this party’s share plus the fine deposit, otherwise
+  the transaction is rejected.
   The new state records the address that the funds arrived from
   (it will be used for the payout in the end) and the identity of the
   other party we are waiting for.
@@ -235,9 +245,9 @@ One of the parties has contributed their share and the contract waiting for
 the other one. Possible transitions:
 
 * The first party requests a refund (`MkRequestTimeout`) -> `MkStateTerminated`.
-* The second party contributes their share -> `MkStateOpen`. If the amount
-  is smaller than the party’s share plus the fine deposit, the transaction is
-  rejected. Otherwise, the address of the second party is recorded.
+* The second party contributes their share (`MkRequestJoin`) -> `MkStateOpen`.
+  If the amount is smaller than the party’s share plus the fine deposit, the
+  transaction is rejected. Otherwise, the address of the second party is recorded.
 
 ### The channel is open (`MkStateOpen`)
 
