@@ -22,9 +22,9 @@ paychan_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd )"
 
 command -v fift > /dev/null || \
   fail 'Make sure `fift` is in PATH.'
-echo '"Asm.fif" include' | fift -s - || \
-  fail 'Make sure the standard Fift library from the ton-blockchain distribution' \
-       'is available in FIFTPATH'
 
-FIFTPATH="$FIFTPATH:$paychan_root/src/lib:$paychan_root/src/cli:$paychan_root/build" \
+[ "$(echo '"srksrksrk" type' | fift -s -)" == "srksrksrk" ] || \
+  fail 'Your `fif` installation appears to be broken.'
+
+FIFTPATH="$paychan_root/build:$paychan_root/src/cli:$paychan_root/src/lib:$paychan_root/vendor/fift:$FIFTPATH" \
   fift -s "$paychan_root/src/cli/Main.fif"
