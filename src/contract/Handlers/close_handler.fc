@@ -39,7 +39,7 @@ cell payoutMatches(
   var s = miou.begin_parse();
   var maybeTag = s~load_uint(1);
   if (maybeTag == 0) {
-    return (0, 0, false);
+    return (0, 0, true);
   } else {
     var iouS = s~load_bits(slice_bits(s));
     var iouC = begin_cell().store_slice(iouS).end_cell();
