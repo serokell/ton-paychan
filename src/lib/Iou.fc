@@ -5,20 +5,24 @@
 ;;   return (amount, iou, uome);
 ;; }
 
-;; (amount, iou, uome, sign_ok, addr_ok)
-(int, int, int, int, int) parseIouQ(cell iouCell, int pk) {
+;; (iouTotal, iou_ok)
+(int, int) parseIouQ(cell iouCell, int pk) {
   var (payload, sign_ok) = checkSignedQ(iouCell, pk);
 
-  var ps = payload.begin_parse();
+  if (sign_ok) {
+    var ps = payload.begin_parse();
+    var (wc, addr) = (ps~load_int(8), ps~load_uint(256));
+    var (myWc, myAddr) = parse_std_addr(my_address());
 
-  var (wc, addr) = (ps~load_int(8), ps~load_uint(256));
-  var (myWc, myAddr) = parse_std_addr(my_address());
+    if ((myWc == wc) & (myAddr == addr)) {
+      var _amount = ps~load_uint(120);
+      var iouTotal = ps~load_uint(248);
+      return (iouTotal, true);
+    } else {
+      return (0, false);
+    }
 
-  var addr_ok = (myWc == wc) & (myAddr == addr);
-
-  var amount = ps~load_uint(120);
-  var iou = ps~load_uint(248);
-  var uome = ps~load_uint(248);
-
-  return (amount, iou, uome, sign_ok, addr_ok);
+  } else {
+    return (0, false);
+  }
 }

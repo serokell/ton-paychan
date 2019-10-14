@@ -34,17 +34,17 @@ cell payoutMatches(
   proceedPayout2(addr1, share1 + payout1, addr2, share2 + payout2);
   return terminateContract();
 }
-;; iou, uome, iou_ok
-(int, int, int) parseMIou(cell miou, int pk) impure {
+;; iou, iou_ok
+(int, int) parseMIou(cell miou, int pk) impure {
   var s = miou.begin_parse();
   var maybeTag = s~load_uint(1);
   if (maybeTag == 0) {
-    return (0, 0, true);
+    return (0, true);
   } else {
     var iouS = s~load_bits(slice_bits(s));
     var iouC = begin_cell().store_slice(iouS).end_cell();
-    var (_, iou, uome, sign_ok, addr_ok) = parseIouQ(iouC, pk);
-    return (iou, uome, sign_ok & addr_ok);
+    var (iouTotal, iou_ok) = parseIouQ(iouC, pk);
+    return (iouTotal, iou_ok);
   }
 }
 
@@ -62,8 +62,8 @@ cell disputeOccured(
   var (payout1, miou1) = parseCloseReq(closeReq1);
   var (payout2, miou2) = parseCloseReq(closeReq2);
 
-  var (iou1, uome1, iou_ok1) = parseMIou(miou1, pk2);
-  var (iou2, uome2, iou_ok2) = parseMIou(miou2, pk1);
+  var (iou1, iou_ok1) = parseMIou(miou1, pk2);
+  var (iou2, iou_ok2) = parseMIou(miou2, pk1);
 
   var owes1 = max(iou1 - payout1, iou2);
   var owes2 = max(iou2 - payout2, iou1);
