@@ -18,7 +18,7 @@ fail () {
   exit 1
 }
 
-paychan_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd )"
+paychan_root="$(cd "$(dirname $(readlink "${BASH_SOURCE[0]}"))/.." && pwd )"
 
 command -v fift > /dev/null || \
   fail 'Make sure `fift` is in PATH.'
@@ -27,4 +27,4 @@ command -v fift > /dev/null || \
   fail 'Your `fif` installation appears to be broken.'
 
 FIFTPATH="$paychan_root/build:$paychan_root/src/cli:$paychan_root/src/lib:$paychan_root/vendor/fift:$FIFTPATH" \
-  fift -s "$paychan_root/src/cli/Main.fif"
+  fift -s "$paychan_root/src/cli/Main.fif" "$@"
