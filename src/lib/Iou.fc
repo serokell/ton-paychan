@@ -1,22 +1,24 @@
 
 ;; (amount, iou, uome)
-(int, int, int) parseIou(cell in_msg, int pk) {
-  var payload = checkSigned(in_msg, pk);
+;; (int, int, int) parseIou(cell iouCell, int pk) impure {
+;;
+;;   return (amount, iou, uome);
+;; }
+
+;; (amount, iou, uome, sign_ok, addr_ok)
+(int, int, int, int, int) parseIouQ(cell iouCell, int pk) {
+  var (payload, sign_ok) = checkSignedQ(iouCell, pk);
 
   var ps = payload.begin_parse();
 
   var (wc, addr) = (ps~load_int(8), ps~load_uint(256));
   var (myWc, myAddr) = parse_std_addr(my_address());
 
-  throw_unless_(
-    RawReq::AddressMismatch(),
-    (myWc == wc) & (myAddr == addr)
-    );
-
+  var addr_ok = (myWc == wc) & (myAddr == addr);
 
   var amount = ps~load_uint(120);
   var iou = ps~load_uint(248);
   var uome = ps~load_uint(248);
 
-  return (amount, iou, uome);
+  return (amount, iou, uome, sign_ok, addr_ok);
 }

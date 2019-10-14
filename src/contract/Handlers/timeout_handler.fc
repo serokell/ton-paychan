@@ -28,18 +28,20 @@ cell handle_timeout(
 
     var (reqPayout, _) = parseCloseReq(closeReq);
     if ((now() - prevTimestamp) > timeout) {
-      if (msg_pk == pk1) {
-        proceedPayout2(
-          addr1, share1 + reqPayout + (2 * fine),
-          addr2,  share2 - reqPayout
+      if (prevReqPk == pk1) {
+        return disputeOccured(
+          closeReq,
+          emptyCloseReq(),
+          globalState,
+          openState
           );
-        return terminateContract();
-      } elseif (msg_pk = pk2) {
-        proceedPayout2(
-          addr1, share1 - reqPayout,
-          addr2, share2 + reqPayout + (2 * fine)
+      } elseif (prevReqPk = pk2) {
+        return disputeOccured(
+          emptyCloseReq(),
+          closeReq,
+          globalState,
+          openState
           );
-        return terminateContract();
       } else {
         throw(Timeout::UnknownAddress());
         return unreachableReturn();

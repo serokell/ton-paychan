@@ -41,7 +41,6 @@
       handle_close(msg_pk, closeReq, globalState, localState);
     putLocalState(newLocalState);
   } elseif (op == ReqOp::Timeout()) {
-    ;; TODO: what to sign in TimeoutReq
     var (msg_pk, _) = parseRawReq(in_msg, globalState);
     var newLocalState =
       handle_timeout(msg_pk, globalState, localState);

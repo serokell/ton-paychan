@@ -34,6 +34,72 @@ cell payoutMatches(
   proceedPayout2(addr1, share1 + payout1, addr2, share2 + payout2);
   return terminateContract();
 }
+;; iou, uome, iou_ok
+(int, int, int) parseMIou(cell miou, int pk) impure {
+  var s = miou.begin_parse();
+  var maybeTag = s~load_uint(1);
+  if (maybeTag == 0) {
+    return (0, 0, false);
+  } else {
+    var iouS = s~load_bits(slice_bits(s));
+    var iouC = begin_cell().store_slice(iouS).end_cell();
+    var (_, iou, uome, sign_ok, addr_ok) = parseIouQ(iouC, pk);
+    return (iou, uome, sign_ok & addr_ok);
+  }
+}
+
+cell disputeOccured(
+  cell closeReq1,
+  cell closeReq2,
+  cell globalState,
+  cell openState) {
+
+  var (pk1, pk2, share1, share2, _, fine, _)
+    = parseGlobalState(globalState);
+
+  var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
+  var (payout1, miou1) = parseCloseReq(closeReq1);
+  var (payout2, miou2) = parseCloseReq(closeReq2);
+
+  var (iou1, uome1, iou_ok1) = parseMIou(miou1, pk2);
+  var (iou2, uome2, iou_ok2) = parseMIou(miou2, pk1);
+
+  var owes1 = max(iou1 - payout1, iou2);
+  var owes2 = max(iou2 - payout2, iou1);
+
+  if (iou_ok1 & iou_ok2) {
+    var finalPayout = owes2 - owes1;
+
+    proceedPayout2(
+      addr1, share1 + finalPayout + fine,
+      addr2, share2 - finalPayout + fine
+      );
+
+    return terminateContract();
+  } elseif ((~ iou_ok1) & iou_ok2) {
+    var finalPayout = owes2 - owes1;
+
+    proceedPayout2(
+      addr1, share1 + finalPayout,
+      addr2, share2 - finalPayout + (2 * fine)
+      );
+
+    return terminateContract();
+  } elseif (iou_ok1 & (~ iou_ok2)) {
+    var finalPayout = owes2 - owes1;
+
+    proceedPayout2(
+      addr1, share1 + finalPayout + (2 * fine),
+      addr2, share2 - finalPayout
+      );
+
+    return terminateContract();
+  } else {
+    return mkStateOpen(addr1, addr2);
+  }
+
+}
 
 cell handle_close(
   int msg_pk,
@@ -44,10 +110,10 @@ cell handle_close(
   var ls = localState.begin_parse();
   var (_, stateTag) = ls.load_StateTag();
 
-  var (pk1, pk2, share1, share2, _, _, _)
+  var (pk1, pk2, share1, share2, _, fine, _)
     = parseGlobalState(globalState);
 
-  var (payout, miou) = parseCloseReq(closeReq);
+  var (payout, mIou) = parseCloseReq(closeReq);
 
   if (stateTag == StateTags::Open()) {
     ;; Open -> Closing
@@ -75,9 +141,10 @@ cell handle_close(
     var (prevReqPk, openState, prevCloseReq, prevTimestamp) =
       parseStateClosing(ls);
 
-    var (prevPayout, prevIou) = parseCloseReq(prevCloseReq);
+    var (prevPayout, prevMIou) = parseCloseReq(prevCloseReq);
+    var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
     if (payout + prevPayout == 0) {
-      var (addr1, addr2) = parseOpenState(openState.begin_parse());
 
       if (msg_pk == pk1) {
         ;; current msg from party1
@@ -103,9 +170,25 @@ cell handle_close(
         return unreachableReturn();
       }
     } else {
-      ;; TODO: resolve dispute
-      throw(33);
-      return unreachableReturn();
+      if (msg_pk == pk1) {
+        return disputeOccured(
+          closeReq,
+          prevCloseReq,
+          globalState,
+          openState
+          );
+      } elseif (msg_pk == pk2) {
+        return disputeOccured(
+          prevCloseReq,
+          closeReq,
+          globalState,
+          openState
+          );
+      } else {
+      ;; unnown party
+        throw(Close::UnknownParty3());
+        return unreachableReturn();
+      }
     }
   } else {
     ;; Unknown state transition
