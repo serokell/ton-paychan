@@ -132,10 +132,15 @@ cell handle_close(
       throw_if_payoutImpossible(share2, payout, share1);
       return createStateClosing(2, localState, closeReq);
     }
-  } elseif(stateTag == StateTags::Closing()) {
+  } elseif (stateTag == StateTags::Closing()) {
     ;; Closing -> ???
     var (prevReqPkn, openState, prevCloseReq, prevTimestamp) =
       parseStateClosing(ls);
+
+    throw_unless_(
+      Close::DuplicateRequest(),
+      msg_pkn != prevReqPkn
+      );
 
     var (prevPayout, prevMIou) = parseCloseReq(prevCloseReq);
     var (addr1, addr2) = parseOpenState(openState.begin_parse());
