@@ -104,9 +104,9 @@
     { ."Note: this appears to be a previously missing payment." cr
       drop
       // ( ... )
-      getPaymentsStateMissingAmount 7 pick
+      dup getPaymentsStateMissingAmount 7 pick
       2dup < { fail"The amount is larger than total missing" } if
-      - setPaymentsStateMissingAmount
+      - swap setPaymentsStateMissingAmount
     }
   cond
   6 pick ?dup

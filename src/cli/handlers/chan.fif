@@ -34,11 +34,14 @@ library Handlers_new
   // ( ourKeyName ourSk ourPk )
 
   cmdline_getarg_int  // share our (grams)
-  // sk pk share
   tuck
-  // sk share pk share
-  cmdline_getarg  // name of their pk
-  dup 5 -roll
+  // ( ourKeyName ourSk share ourPk share )
+
+  cmdline_getarg dup  // name of their pk
+  // ( ourKeyName ourSk share ourPk share theirKeyName theirKeyName )
+  6 -roll
+  // ( theirKeyName ourKeyName ourSk share ourPk share theirKeyName )
+
   load-key-public
   // ( theirKeyName ourKeyName ourSk ourShare ourPk ourShare theirPk )
 
