@@ -74,16 +74,14 @@
 
 { parseIouPayload 4 roll drop 3 roll drop
   // ( iou cliState amount theyOwe' weOwe' )
-
-  3 roll parseCliState
-  // ( iou amount theyOwe' weOwe' wc addr globalState paymentsState ... )
-  //   7   6      5        4      3  2    1           0
-
-  5 pick 1 pick getPaymentsStateTheyOwe -
+  3 roll parseCliStateWithPkn
+  // ( iou amount theyOwe' weOwe' pkn wc addr globalState paymentsState ... )
+  //   8   7      6        5      4   3  2    1           0
+  6 pick 1 pick getPaymentsStateTheyOwe -
   // ( ... theyOweDelta )
-  dup 0= { 7 pick 0= { fail"Duplicate payment" } ifnot } if
+  dup 0= { 8 pick 0= { fail"Duplicate payment" } ifnot } if
   dup 0>=
-    { dup 8 pick -
+    { dup 9 pick -
       // ( ... theyOweDelta extraAmount )
       dup 0< { fail"The payment is self-inconsistent" } if
       ?dup
@@ -98,22 +96,20 @@
       dup getPaymentsStateTheyOwe over getPaymentsStateWeOwe -
       2 pick getGlobalStateShare2
       > { fail"They are trying to send more than their share allows" } if
-
-      7 pick swap setPaymentsStateIou
+      8 pick swap setPaymentsStateIou
     }
     { ."Note: this appears to be a previously missing payment." cr
       drop
       // ( ... )
-      dup getPaymentsStateMissingAmount 7 pick
+      dup getPaymentsStateMissingAmount 8 pick
       2dup < { fail"The amount is larger than total missing" } if
       - swap setPaymentsStateMissingAmount
     }
   cond
-  6 pick ?dup
+  7 pick ?dup
     { ."Payment received. Amount = " ._ cr }
     { ."This was a state sync message. State synchronised." cr }
   cond
-
   mkCliState
   4 -roll drop drop drop drop
 } : _receivePayment

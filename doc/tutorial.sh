@@ -38,7 +38,7 @@ cp bob/bob.pk alice/
 
 # Start the channel
 if [ "$reproducible" -ne 0 ]; then
-  runalice paychan chan new alice 2000000000 bob 1000000000 86400 500000000 566
+  runalice paychan chan new alice 2000000000 bob 1000000000 86400 500000000 100000000 566
 else
   runalice paychan chan new alice 2000000000 bob 1000000000 86400 500000000
 fi
@@ -49,7 +49,7 @@ addr=${addr#alice/}
 addr=${addr%.state}
 runalice paychan chan info "$addr"
 
-runbob paychan chan join bob alice
+runbob paychan chan join bob alice 10000000
 
 # Alice makes payments
 runalice paychan payment send "$addr" 100

@@ -136,22 +136,34 @@ library CliState  // The state of the cli tool
 //
 
 { <b
+  5 roll 1 u,
   4 roll 4 roll addr,
   2 roll ref,
   1 roll ref,
   b>
 } : mkCliState
-// ( wc addr globalState paymentsState -- cliState )
+// ( pkn wc addr globalState paymentsState -- cliState )
 
 { <s
+  1 u@+
   addr@+
   ref@+ swap
   ref@+ swap
   s>
-} : parseCliState
+} : parseCliStateWithPkn
+// ( cliState -- pkn wc addr globalState paymentsState )
+
+{ parseCliStateWithPkn 4 roll drop } : parseCliState
 // ( cliState -- wc addr globalState paymentsState )
 
 { <s
+  1 u@
+} : getCliStatePkn
+// ( cliState -- wc addr )
+
+
+{ <s
+  1 u@+ nip
   8 i@+ 256 u@
 } : getCliStateAddr
 // ( cliState -- wc addr )
@@ -163,6 +175,7 @@ library CliState  // The state of the cli tool
 // ( cliState -- paymentsState )
 
 { <s <b swap
+  1 u@+ -rot 1 u, swap
   addr@+ 3 -roll addr, swap
   ref@ ref,
   swap ref,
@@ -232,7 +245,6 @@ library CliState  // The state of the cli tool
 
 { parseCliStateNice
   swap ."Keys: " type ." - " type cr
-
   parseCliState
   swap
   parseGlobalState

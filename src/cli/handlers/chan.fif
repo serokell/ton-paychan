@@ -45,29 +45,38 @@ library Handlers_new
   load-key-public
   // ( theirKeyName ourKeyName ourSk ourShare ourPk ourShare theirPk )
 
-  cmdline_getarg_int  // share their (grams)
+  cmdline_getarg_int  // share their (nanograms)
   rot swap
   // ( theirKeyName ourKeyName ourSk ourShare ourPk theirPk ourShare theirShare )
 
   cmdline_getarg_int  // timeout (seconds)
 
-  cmdline_getarg_int  // fineAmount (grams)
+  cmdline_getarg_int  // fineAmount (nanograms)
 
   // XXX: Undocumented extra argument for debugging
   // nonce
-  { (number) 1 = not abort_usage"Not an integer" } { now } cmdline_getarg'
+  // { (number) 1 = not abort_usage"Not an integer" } { now } cmdline_getarg'
+  now
 
   mkGlobalState
   // ( theirKeyName ourKeyName ourSk ourShare globalState )
+
+  dup getGlobalStateFine 3 -roll
 
   dup
   0 contract-code createStateInit // TODO: take workchain as param
   // ( theirKN ourKN ourSk ourShare globalState stateInit wc addr )
   2dup 7 pick -rot
   0 2 -roll // pkn = 0
-  mkSTMBody
-  // ( theirKN ourKN ourSk ourShare globalState stateInit wc addr STM-body )
-  -rot 2dup 7 roll 6 roll 6 roll
+  mkJoinMsgBody
+  // ( theirKN ourKN ourSk ourShare globalState stateInit wc addr join-body )
+  -rot 2dup
+  7 roll // ourShare
+  9 roll // fine
+  +
+  cmdline_getarg_int // extra-fuel (nanograms)
+  +
+  6 roll 6 roll
   createInitMessage
   boc>B "init-message.boc" tuck B>file
   ."Init-message written to file `" type ."`" cr
@@ -76,7 +85,7 @@ library Handlers_new
   // ( theirKeyname ourKeyName ourSk globalState globalState wc addr )
   2dup 5 -roll 5 -roll
   // ( theirKeyname ourKeyName ourSk wc addr globalState globalState wc addr )
-  rot mkEmptyPaymentsState mkCliState
+  rot 0 2 -roll mkEmptyPaymentsState mkCliState
   // ( theirKeyName ourKeyName ourSk wc addr globalState cliState )
 
   6 roll 6 roll swap mkCliStateNice
@@ -104,16 +113,21 @@ library Handlers_new
   -rot 2dup 2dup
   8 roll -rot
   1 2 -roll // pkn = 1
-  mkSTMBody
+  mkJoinMsgBody
   // ( ourKeyName theirKeyName globalState wc addr wc addr stmbody )
-  5 pick getGlobalStateShare2 swap
+  5 pick getGlobalStateShare2
+  6 pick getGlobalStateFine
+  +
+  cmdline_getarg_int // extra-fuel (nanograms)
+  +
+  swap
   // ( ourKN theirKN globalState wc addr wc addr share2 stmbody )
   createMsg
   // ( ourKN theirKN globalState wc addr msg )
   boc>B "join-message.boc" tuck B>file
   ."Saved join message for smartcontract to " type cr
   2 roll
-  mkGlobalStateMirror mkEmptyPaymentsState mkCliState
+  1 3 -roll mkGlobalStateMirror mkEmptyPaymentsState mkCliState
   // ( ourKN theirKN cliState)
   -rot mkCliStateNice
   saveCliStateNice
@@ -131,14 +145,24 @@ library Handlers_new
   // ( cliState ourPkName )
   load-key-pair drop swap
   // ( ourSk cliState )
+  swap
+  over getCliStatePkn
+  2 pick getCliStateAddr
 
-  getCliStatePaymentsState
-  // ( ourSk paymentsState )
+  4 pick getCliStatePaymentsState
+  // ( cliState ourSk pkn wc addr paymentsState )
 
   dup getPaymentsStateBalance swap getPaymentsStateIou
-  // ( ourSk balance (iou true | false) )
-
-  // TODO[gpevnev]: prepare a close message
+  // ( ourSk pkn balance (iou true | false) )
+  { <b b{1} s, swap <s s, b> } { <b b{0} b> } cond
+  // ( cliState ourSk pkn wc addr balance miou )
+  mkCloseMsgBody
+  over getCliStateAddr
+  Gram
+  3 roll
+  createMsg
+  boc>B "close-message.boc" tuck B>file
+ ."Saved close message for smartcontract to " type cr
 } :cmdline cli_chan_close
 
 { cmdline_getarg  // channel address

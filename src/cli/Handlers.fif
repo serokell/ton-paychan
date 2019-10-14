@@ -27,12 +27,13 @@
     ." <their share>"
     ." <timeout>"
     ." <fine amount>"
-    // ." <extra fuel>"  // TODO[gpevnev] Uncomment me
+    ." <extra fuel>"
     cr
     ."  (Writes joining request to `paychan.join`)" cr
   cr
   ."  Join a payment channel created by someone else:" cr
-    ."    chan join <our key name> <their key name>"
+    ."    chan join <our key name> <their key name> <extra fuel>"
+
     cr
     ."  (Reads joining request from `paychan.join`)" cr
   cr
