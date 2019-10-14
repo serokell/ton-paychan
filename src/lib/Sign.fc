@@ -10,15 +10,23 @@ cell getSignedData(cell signed) {
   return preload_ref(begin_parse(signed));
 }
 
+;; cell, sign_ok
+(cell, int) checkSignedQ(cell signed, int pk) {
+  slice signature = begin_parse(signed);
+  cell c = preload_ref(signature);
+  ;; TODO: assign code
+  var sign_ok = check_signature(cell_hash(c), signature, pk);
+  return (c, sign_ok);
+}
+
 ;;;
  ;; Check the signature and extract the signed data.
  ;;
  ;; @throw if the signature is incorrect.
  ;;;
 cell checkSigned(cell signed, int pk) {
-  slice signature = begin_parse(signed);
-  cell c = preload_ref(signature);
+  var (c, sign_ok) = checkSignedQ(signed, pk);
   ;; TODO: assign code
-  throw_unless(1, check_signature(cell_hash(c), signature, pk));
+  throw_unless(1, sign_ok);
   return c;
 }

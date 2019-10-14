@@ -33,6 +33,16 @@ builder store_timestamp(builder b, int timestamp) {
   return b.store_uint(timestamp, 256);
 }
 
+(slice, int) load_pkn(slice s) {
+  var (s, pkn) = s.load_uint(1);
+  return (s, pkn + 1);
+}
+
+builder store_pkn(builder b, int pkn) {
+  return b.store_uint(pkn - 1, 1);
+}
+
+
 cell unreachableReturn() {
   return begin_cell().end_cell();
 }

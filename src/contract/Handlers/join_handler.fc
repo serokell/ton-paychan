@@ -1,0 +1,49 @@
+;; all handlers produce new LocalState as cell
+cell handle_join(
+  slice msg_src_addr,
+  int msg_value,
+  int msg_pk,
+  cell globalState,
+  cell localState) {
+
+  var (pk1, pk2, share1, share2, _, fine, _)
+    = parseGlobalState(globalState);
+
+  var ls = localState.begin_parse();
+
+  var stateTag = ls.preload_StateTag();
+
+  if (stateTag == StateTags::WaitingBoth()) {
+    ;; WaitingBoth -> WaitingOne s_addr pk
+    var requesterShare = msg_pk.pk2Share(globalState);
+
+    ;; supplied not enough
+    throw_when(
+      Join::SuppliedNotEnough1(),
+      requesterShare + fine > msg_value
+      );
+
+    raw_reserve(requesterShare + fine, 0); ;; TODO: figure out mode
+
+    return mkStateWaitingOne(msg_src_addr, msg_pk);
+  } elseif (stateTag == StateTags::WaitingOne()) {
+    ;; WaitingOne addr1 pk1 -> Open (OpenState addr1 addr2)
+
+    raw_reserve(share1 + share2 + (2 * fine), 0); ;; figure out mode
+
+    var (stateAddr, statePk) = parseStateWaitingOne(ls);
+
+    if ((statePk == pk1) & (pk2 == msg_pk)) {
+      return mkStateOpen(stateAddr, msg_src_addr);
+    } elseif ((statePk == pk2) & (pk1 == msg_pk)) {
+      return mkStateOpen(msg_src_addr, stateAddr);
+    } else {
+      throw(Join::UnknownParty());
+      return localState;
+    }
+  } else {
+    ;; none of appropriate states for this message matches
+    throw(Join::InvalidState());
+    return unreachableReturn();
+  }
+}

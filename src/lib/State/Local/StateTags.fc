@@ -8,6 +8,9 @@ builder store_StateTag(builder b, int tag) {
   return s.load_uint(4);
 }
 
+int preload_StateTag(slice s) {
+  return s.preload_uint(4);
+}
 
 int StateTags::WaitingBoth() { return 1; }
 int StateTags::WaitingOne()  { return 2; }

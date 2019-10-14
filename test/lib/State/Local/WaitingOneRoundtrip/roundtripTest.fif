@@ -17,10 +17,9 @@
 
 {
   buildStdAddr <s
-  <b 1234 256 u, b> <s
+  1234
   contract <s
   runvmdict 0= not abort"TVM died unexpectedly"
-  256 u@+ s>
   1234 assertIntEq
   buildStdAddr <s assertSliceEq
 } @test waitingOneRoundtrip

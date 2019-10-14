@@ -64,6 +64,7 @@ library Handlers_new
   0 contract-code createStateInit // TODO: take workchain as param
   // ( theirKN ourKN ourSk ourShare globalState stateInit wc addr )
   2dup 7 pick -rot
+  0 2 -roll // pkn = 0
   mkSTMBody
   // ( theirKN ourKN ourSk ourShare globalState stateInit wc addr STM-body )
   -rot 2dup 7 roll 6 roll 6 roll
@@ -101,7 +102,9 @@ library Handlers_new
     { fail"Their public key does not match the one in the request" } ifnot
   // ( ourKeyName ourSk theirKeyName wc addr globalState )
   -rot 2dup 2dup
-  8 roll -rot mkSTMBody
+  8 roll -rot
+  1 2 -roll // pkn = 1
+  mkSTMBody
   // ( ourKeyName theirKeyName globalState wc addr wc addr stmbody )
   5 pick getGlobalStateShare2 swap
   // ( ourKN theirKN globalState wc addr wc addr share2 stmbody )
