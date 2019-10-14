@@ -13,8 +13,8 @@ cell handle_timeout(
     ;; TODO: send all funds to contract with addr 0?
     return terminateContract();
   } elseif (stateTag == StateTags::WaitingOne()) {
-    var (addr, pk) = parseStateWaitingOne(ls);
-    var share = pk.pk2Share(globalState);
+    var (addr, pkn) = parseStateWaitingOne(ls);
+    var share = globalState.pkn2share(pkn);
     proceedPayout(addr, share + fine);
     return terminateContract();
   } elseif (stateTag == StateTags::Closing()) {

@@ -1,19 +1,19 @@
 ;; MkStateWaitingOne
-cell mkStateWaitingOne(slice addr, int pk) {
+cell mkStateWaitingOne(slice addr, int pkn) {
   return begin_cell()
     .store_StateTag(StateTags::WaitingOne())
     .store_slice(addr)
-    .store_pk(pk)
+    .store_uint(pkn - 1, 1)
     .end_cell();
 }
 
-;; addr, pk
+;; addr, pkn
 (slice, int) parseStateWaitingOne(slice s) {
   throw_when(
     Prs::WaitingOne(),
     s~load_StateTag() != StateTags::WaitingOne()
     );
   var addr = s~load_msg_addr();
-  var pk = s~load_pk();
-  return (addr, pk);
+  var pkn = s~load_uint(1);
+  return (addr, pkn + 1);
 }

@@ -1,8 +1,8 @@
-;; msg_pk, cell
+;; msg_pkn, cell
 (int, cell) parseRawReq(slice msg_body, cell globalState) {
   var reqOp = msg_body~load_uint(32);
   var pkn = msg_body~load_pkn();
-  var pk = pkn.pkn2pk(globalState);
+  var pk = globalState.pkn2pk(pkn);
 
   var (wc, addr) = (msg_body~load_int(8), msg_body~load_uint(256));
 
@@ -31,5 +31,5 @@
     (myWc == wc) & (myAddr == addr)
     );
 
-  return (pk, req);
+  return (pkn, req);
 }

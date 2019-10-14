@@ -47,22 +47,19 @@ int addr2Share(slice addr, cell globalState, cell openState) {
   }
 }
 
-int pk2Share(int pk, cell globalState) {
-  var (pk1, pk2, share1, share2, _, _, _) =
-    parseGlobalState(globalState);
-
-  if (pk.pk_eq(pk1)) {
-    return share1;
-  } elseif (pk.pk_eq(pk2)) {
-    return share2;
-  } else {
-    throw(Util::Pk2Share());
-    return 0;
-  }
-}
-
-int pkn2pk(int pkn, cell globalState) {
+int pkn2pk(cell globalState, int pkn) {
   var (pk1, pk2, _, _, _, _, _) =
     parseGlobalState(globalState);
   if (pkn == 1) { return pk1; } else { return pk2; }
+}
+
+int pkn2share(cell globalState, int pkn) {
+  var (_, _, share1, share2, _, _, _) =
+    parseGlobalState(globalState);
+
+  if (pkn == 1) {
+    return share1;
+  } else {
+    return share2;
+  }
 }

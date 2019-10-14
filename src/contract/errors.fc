@@ -24,7 +24,6 @@ int Prs::WaitingOne()              { return 1303; }
 int Util::Pk2Addr()                { return 1401; }
 int Util::Addr2Pk()                { return 1402; }
 int Util::Addr2Share()             { return 1403; }
-int Util::Pk2Share()               { return 1404; }
 
 int RawReq::BadSignature()         { return 1501; }
 int RawReq::AddressMismatch()      { return 1502; }
