@@ -11,10 +11,6 @@ library Address  // Smart-contract address utilities
 } : addr@+
 // ( s -- wc addr s )
 
-{ 0 createStateInit rot drop
-} : paychan-addr
-// ( globalConfig -- wc addr )
-
 { swap (.) +":"
   swap 64 u>hex$ $+
 } : addr>hex$

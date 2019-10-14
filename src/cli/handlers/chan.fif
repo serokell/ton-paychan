@@ -61,7 +61,7 @@ library Handlers_new
   // ( theirKeyName ourKeyName ourSk ourShare globalState )
 
   dup
-  0 createStateInit // TODO: take workchain as param
+  0 contract-code createStateInit // TODO: take workchain as param
   // ( theirKN ourKN ourSk ourShare globalState stateInit wc addr )
   2dup 7 pick -rot
   mkSTMBody
@@ -69,7 +69,7 @@ library Handlers_new
   -rot 2dup 7 roll 6 roll 6 roll
   createInitMessage
   boc>B "init-message.boc" tuck B>file
-  ."Init-message written to file " type cr
+  ."Init-message written to file `" type ."`" cr
   // ( theirKN ourKN ourSk globalState wc addr initMsg )
   2 pick -rot
   // ( theirKeyname ourKeyName ourSk globalState globalState wc addr )

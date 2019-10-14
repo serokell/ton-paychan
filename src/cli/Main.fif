@@ -4,6 +4,13 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+// Start by loading the contract code, because otherwisethere will be
+// conflicts between the names or procs defined in the contract's assembly code
+// and actual Fift functions we have in the library.
+"Asm.fif" include
+"paychan.asm.fif" include constant contract-code
+
+
 "Cmdline.fif" include
 "Handlers.fif" include
 

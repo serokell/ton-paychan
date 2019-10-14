@@ -1,19 +1,17 @@
-library ContractMessages  // Smart-contract address utilities
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library ContractMessages  // Prepare signed messages for the contract
 
 "TonUtil.fif" include
 "State/GlobalState.fif" include
+
 { <b 1 4 u, b> } : mkWaitingBoth
 
-"build/paychan.boc" constant paychan-code
-
 {
-  // stack: (globalState: Cell) (wc: Int)
-
-  swap
-  // stack: wc, state
-  paychan-code file>B B>boc // TODO: take codepath as param
-  ."Loaded paychan code from " paychan-code type cr
-  swap
+  // stack: (globalState: Cell) (wc: Int) (code: Cell)
+  rot
   // wc, code, globalState
   <b swap ref, mkWaitingBoth ref, b>
   // wc, code, state

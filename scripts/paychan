@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+#
+# A bash wrapper that finds the Fift libraries and sets `$FIFTPATH` accordingly.
+#
+# You can call this file from anywhere or just add it to your `$PATH` and it
+# will magically make sure the Paychan cli has all its dependencies available.
+#
+
+set -e
+
+fail () {
+  echo Fail: "$@"
+  exit 1
+}
+
+paychan_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd )"
+
+command -v fift > /dev/null || \
+  fail 'Make sure `fift` is in PATH.'
+echo '"Asm.fif" include' | fift -s - || \
+  fail 'Make sure the standard Fift library from the ton-blockchain distribution' \
+       'is available in FIFTPATH'
+
+FIFTPATH="$FIFTPATH:$paychan_root/src/lib:$paychan_root/src/cli:$paychan_root/build" \
+  fift -s "$paychan_root/src/cli/Main.fif"
