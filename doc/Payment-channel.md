@@ -21,12 +21,10 @@ channel contract is preconfigured and deployed to the blockchain network
 
 The contract starts in the “waiting” state, which means that it is waiting
 for initial commitments from both parties. Alice and Bob each have to send
-to the contract the amount of tokens equal to their share, plus and extra
-deposit that will be locked in order to be used as a fine payment in case of
-misbehaviour. After one of the parties makes their transaction, they can cancel
-contract initialisation and destroy it any time until the other party sends
-their transaction as well. After this the tokens are locked in the contract
-and the payment channel is considered open.
+to the contract the amounts of tokens equal to their shares, plus extra
+deposits that will be locked in order to be used as a fine payment in case of
+misbehaviour. Once both parties contribute their shares, the tokens become
+locked in the contract and the payment channel is considered open.
 
 Now if one of the parties wants to send a payment to the other, they prepare
 a special IOU message that contains the transaction amount and two values that
@@ -46,9 +44,9 @@ bi-directional and receiving a payment _reduces_ the debt of the receiver,
 therefore, as long as the mutual debts are balanced and stay within the
 allowed bounds the channel can remain open for a prolonged period of time.
 
-It is recommended that parties acknowledge the receipt of each micro-payment,
-for example, this can happen naturally by the party performing the services
-that it was paid for; however the security of the channel does not depend
+It is recommended that parties acknowledge the receipt of each micro-payment
+(for example, this can happen naturally by the party performing the services
+that they were paid for); however the security of the channel does not depend
 on this. It is also not a requirement that the IOU messages are delivered
 in order, or, actually, delivered at all. Since every IOU message carries
 all the information about current debts, it is enough to receive the last
@@ -58,17 +56,15 @@ When Alice and Bob expect no further micro-transactions, they start closing
 the channel. It is recommended that they exchange two final IOU messages
 sending 0 to each other in order to confirm that they are in agreement on
 final amounts owed to each other. When ready, Alice sends to the contract
-a payout request and attaches the last IOU she received from Bob. After this
-she is not allowed to send any non-zero payment to Bob. Now Bob has a fixed
-amount of time to either confirm that he agrees with the distribution
-proposed or protest. If he agrees, he sends a confirmation to the contract
-and it distributes the funds according to the distribution proposed by Alice;
-if he believes Alice owes him more than she stated, he can submit a more
-recent IOU from Alice showing a larger amount, in which case the contract
-will perform the distribution according to this newer IOU and fines Alice.
-In case Bob does neither, after the fixed time passes, Alice can request
-the contract to go ahead and distribute the funds according to her proposal
-and fines Bob.
+a payout request and attaches the last IOU she received from Bob. Then Bob
+has a fixed amount of time to either confirm that he agrees with the distribution
+proposed or, if it is not the case, propose another distribution.
+
+In any case, since the distribution proposals are supported by IOUs signed
+by the other party, the payment channel smart-contract will be able to
+decide on a fair distribution that will guarantee that both parties receive
+at least as much funds as they expect to receive, based on the incoming
+payments that they saw.
 
 
 ## Off-chain protocol
