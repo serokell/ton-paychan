@@ -1,14 +1,14 @@
 ;; msg_pk, cell
-(int, cell) parseRawReq(slice in_msg, cell globalState) {
-  var reqOp = in_msg~load_uint(32);
-  var pkn = in_msg~load_pkn();
+(int, cell) parseRawReq(slice msg_body, cell globalState) {
+  var reqOp = msg_body~load_uint(32);
+  var pkn = msg_body~load_pkn();
   var pk = pkn.pkn2pk(globalState);
 
-  var (wc, addr) = (in_msg~load_int(8), in_msg~load_uint(256));
+  var (wc, addr) = (msg_body~load_int(8), msg_body~load_uint(256));
 
-  var req = in_msg~load_ref();
+  var req = msg_body~load_ref();
 
-  var signature = in_msg~load_bits(512);
+  var signature = msg_body~load_bits(512);
 
   var signedCell =
     begin_cell()

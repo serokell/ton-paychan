@@ -2,29 +2,27 @@
 ;;
 ;; SPDX-License-Identifier: MPL-2.0
 
-() recv_external (slice in_msg) impure {
- ;; ignore all external messages
+() recv_external (slice msg_body) impure {
+  ;; ignore all external messages
 }
 
 ;; slice is input in ton/crypto/smartcont/wallet-code.fc
-() recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
-  var cs = in_msg_cell.begin_parse();
-  var flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+() recv_internal(int msg_value, cell msg_cell, slice msg_body) impure {
+  var msg_s = msg_cell.begin_parse();
+  var flags = msg_s~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
   if (flags & 1) {
     ;; ignore all bounced messages
     return ();
   }
 
-  ;; need comments in simple transfer message
-
-  var msg_src_addr = cs~load_msg_addr();
-  var op = in_msg.preload_uint(32);
+  var msg_src_addr = msg_s~load_msg_addr();
   var (globalState, localState) = getState();
 
+  var op = msg_body.preload_uint(32);
   if (op == ReqOp::SimpleTransfer()) {
     return ();
   } elseif (op == ReqOp::Join()) {
-    var (msg_pk, _) = parseRawReq(in_msg, globalState);
+    var (msg_pk, _) = parseRawReq(msg_body, globalState);
     var newLocalState =
       handle_join(
         msg_src_addr,
@@ -35,12 +33,12 @@
         );
     putLocalState(newLocalState);
   } elseif (op == ReqOp::Close()) {
-    var (msg_pk, closeReq) = parseRawReq(in_msg, globalState);
+    var (msg_pk, closeReq) = parseRawReq(msg_body, globalState);
     var newLocalState =
       handle_close(msg_pk, closeReq, globalState, localState);
     putLocalState(newLocalState);
   } elseif (op == ReqOp::Timeout()) {
-    var (msg_pk, _) = parseRawReq(in_msg, globalState);
+    var (msg_pk, _) = parseRawReq(msg_body, globalState);
     var newLocalState =
       handle_timeout(msg_pk, globalState, localState);
     putLocalState(newLocalState);
