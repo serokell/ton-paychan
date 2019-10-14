@@ -1,7 +1,3 @@
-cell getCloseReqCell(slice in_msg_body) {
-  return in_msg_body~load_ref();
-}
-
 ;; payout, maybe iou
 (int, cell) parseCloseReq(cell closeReq) {
   var s = closeReq.begin_parse();

@@ -35,8 +35,7 @@
         );
     putLocalState(newLocalState);
   } elseif (op == ReqOp::Close()) {
-    var (msg_pk, closeReqRef) = parseRawReq(in_msg, globalState);
-    var closeReq = getCloseReqCell(closeReqRef.begin_parse());
+    var (msg_pk, closeReq) = parseRawReq(in_msg, globalState);
     var newLocalState =
       handle_close(msg_pk, closeReq, globalState, localState);
     putLocalState(newLocalState);
