@@ -1,5 +1,5 @@
 cell handle_timeout(
-  int msg_pk,
+  int msg_pkn,
   cell globalState,
   cell localState) impure {
 
@@ -18,33 +18,30 @@ cell handle_timeout(
     proceedPayout(addr, share + fine);
     return terminateContract();
   } elseif (stateTag == StateTags::Closing()) {
-    var (prevReqPk, openState, closeReq, prevTimestamp) =
+    var (prevReqPkn, openState, closeReq, prevTimestamp) =
       parseStateClosing(ls);
 
     ;; timeout from other party
-    throw_unless_(Timeout::WrongParty(), msg_pk == prevReqPk);
+    throw_unless_(Timeout::WrongParty(), msg_pkn == prevReqPkn);
 
     var (addr1, addr2) = parseOpenState(openState.begin_parse());
 
     var (reqPayout, _) = parseCloseReq(closeReq);
     if ((now() - prevTimestamp) > timeout) {
-      if (prevReqPk == pk1) {
+      if (prevReqPkn == 1) {
         return disputeOccured(
           closeReq,
           emptyCloseReq(),
-          globalState,
-          openState
-          );
-      } elseif (prevReqPk = pk2) {
-        return disputeOccured(
-          emptyCloseReq(),
-          closeReq,
           globalState,
           openState
           );
       } else {
-        throw(Timeout::UnknownAddress());
-        return unreachableReturn();
+        return disputeOccured(
+          emptyCloseReq(),
+          closeReq,
+          globalState,
+          openState
+          );
       }
     } else {
       ;; timeout initiated too early

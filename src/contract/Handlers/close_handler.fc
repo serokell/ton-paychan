@@ -9,9 +9,9 @@ int isPayoutImpossible(int reqShare, int reqPayout, int otherShare) {
     );
 }
 
-cell createStateClosing(int reqPk, cell localState, cell closeReq) impure {
+cell createStateClosing(int reqPkn, cell localState, cell closeReq) impure {
    return mkStateClosing(
-     reqPk,
+     reqPkn,
      getOpenState(localState),
      closeReq,
      now()
@@ -102,7 +102,7 @@ cell disputeOccured(
 }
 
 cell handle_close(
-  int msg_pk,
+  int msg_pkn,
   cell closeReq,
   cell globalState,
   cell localState) impure {
@@ -117,28 +117,24 @@ cell handle_close(
 
   if (stateTag == StateTags::Open()) {
     ;; Open -> Closing
-    if (msg_pk == pk1) {
+    if (msg_pkn == 1) {
       ;; current msg from party1
       ;; reqShare = share1;
       ;; reqPk = pk1;
       ;; otherShare = share2;
       throw_if_payoutImpossible(share1, payout, share2);
-      return createStateClosing(pk1, localState, closeReq);
-    } elseif (msg_pk == pk2) {
+      return createStateClosing(1, localState, closeReq);
+    } else {
       ;; current msg from party2
       ;; reqShare = share2;
       ;; reqPk = pk2;
       ;; otherShare = share1;
       throw_if_payoutImpossible(share2, payout, share1);
-      return createStateClosing(pk2, localState, closeReq);
-    } else {
-      ;; unknown participant
-      throw(Close::UnknownParty1());
-      return unreachableReturn();
+      return createStateClosing(2, localState, closeReq);
     }
   } elseif(stateTag == StateTags::Closing()) {
     ;; Closing -> ???
-    var (prevReqPk, openState, prevCloseReq, prevTimestamp) =
+    var (prevReqPkn, openState, prevCloseReq, prevTimestamp) =
       parseStateClosing(ls);
 
     var (prevPayout, prevMIou) = parseCloseReq(prevCloseReq);
@@ -146,7 +142,7 @@ cell handle_close(
 
     if (payout + prevPayout == 0) {
 
-      if (msg_pk == pk1) {
+      if (msg_pkn == 1) {
         ;; current msg from party1
         ;; payout1 = payout;
         ;; payout2 = prevPayout;
@@ -155,7 +151,7 @@ cell handle_close(
           payout, prevPayout,
           share1, share2
           );
-      } elseif (msg_pk == pk2) {
+      } else {
         ;; current msg from party2
         ;; payout1 = prevPayout;
         ;; payout2 = payout;
@@ -164,30 +160,22 @@ cell handle_close(
           prevPayout, payout,
           share1, share2
         );
-      } else {
-        ;; unknown participant
-        throw(Close::UnknownParty2());
-        return unreachableReturn();
       }
     } else {
-      if (msg_pk == pk1) {
+      if (msg_pkn == 1) {
         return disputeOccured(
           closeReq,
           prevCloseReq,
-          globalState,
-          openState
-          );
-      } elseif (msg_pk == pk2) {
-        return disputeOccured(
-          prevCloseReq,
-          closeReq,
           globalState,
           openState
           );
       } else {
-      ;; unnown party
-        throw(Close::UnknownParty3());
-        return unreachableReturn();
+        return disputeOccured(
+          prevCloseReq,
+          closeReq,
+          globalState,
+          openState
+          );
       }
     }
   } else {

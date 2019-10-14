@@ -21,7 +21,6 @@ int Prs::StateClosing()            { return 1301; }
 int Prs::StateOpen()               { return 1302; }
 int Prs::WaitingOne()              { return 1303; }
 
-int Util::Pk2Addr()                { return 1401; }
 int Util::Addr2Pk()                { return 1402; }
 int Util::Addr2Share()             { return 1403; }
 
