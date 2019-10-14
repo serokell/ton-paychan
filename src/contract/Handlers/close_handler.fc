@@ -63,43 +63,31 @@ cell disputeOccured(
   var (payout1, miou1) = parseCloseReq(closeReq1);
   var (payout2, miou2) = parseCloseReq(closeReq2);
 
-  var (iou1, iou_ok1) = parseMIou(miou1, pk2);
-  var (iou2, iou_ok2) = parseMIou(miou2, pk1);
+  var (uome1, iou_ok1) = parseMIou(miou1, pk2);
+  var (uome2, iou_ok2) = parseMIou(miou2, pk1);
 
-  var owes1 = max(iou1 - payout1, iou2);
-  var owes2 = max(iou2 - payout2, iou1);
+  var owes1 = max(uome1 - payout1, uome2);
+  var owes2 = max(uome2 - payout2, uome1);
 
-  if (iou_ok1 & iou_ok2) {
-    var finalPayout = owes2 - owes1;
-
-    proceedPayout2(
-      addr1, share1 + finalPayout + fine,
-      addr2, share2 - finalPayout + fine
-      );
-
-    return terminateContract();
-  } elseif ((~ iou_ok1) & iou_ok2) {
-    var finalPayout = owes2 - owes1;
-
-    proceedPayout2(
-      addr1, share1 + finalPayout,
-      addr2, share2 - finalPayout + (2 * fine)
-      );
-
-    return terminateContract();
-  } elseif (iou_ok1 & (~ iou_ok2)) {
-    var finalPayout = owes2 - owes1;
-
-    proceedPayout2(
-      addr1, share1 + finalPayout + (2 * fine),
-      addr2, share2 - finalPayout
-      );
-
-    return terminateContract();
-  } else {
+  if ((~ iou_ok1) & (~ iou_ok2)) {
     return mkStateOpen(addr1, addr2);
-  }
+  } else {
+    var fined1 = 0; var fined2 = 0;
+    if (~ iou_ok1) {
+      fined1 = fine;
+    }
+    if (~ iou_ok2) {
+      fined2 = fine;
+    }
 
+    var finalPayout = owes2 - owes1;
+    proceedPayout2(
+      addr1, share1 + finalPayout - fined1 + fined2,
+      addr2, share2 - finalPayout - fined2 + fined1
+      );
+
+    return terminateContract();
+  }
 }
 
 cell handle_close(
@@ -143,7 +131,7 @@ cell handle_close(
       msg_pkn != prevReqPkn
       );
 
-    var (prevPayout, prevMIou) = parseCloseReq(prevCloseReq);
+    var (prevPayout, _) = parseCloseReq(prevCloseReq);
     var (addr1, addr2) = parseOpenState(openState.begin_parse());
 
     if (msg_pkn == 2) {
