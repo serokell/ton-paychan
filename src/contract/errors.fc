@@ -7,9 +7,6 @@ int Join::InvalidState()           { return 1005; }
 int Join::AddressMismatch()        { return 1007; }
 
 int Close::PayoutImpossible()      { return 1101; }
-int Close::UnknownParty1()         { return 1102; }
-int Close::UnknownParty2()         { return 1103; }
-int Close::UnknownParty3()         { return 1104; }
 int Close::InvalidState()          { return 1105; }
 
 int Timeout::WrongParty()          { return 1201; }
