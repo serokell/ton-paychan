@@ -9,10 +9,7 @@ cell handle_timeout(
   var (pk1, pk2, share1, share2, timeout, fine, _)
     = parseGlobalState(globalState);
 
-  if (stateTag == StateTags::WaitingBoth()) {
-    ;; TODO: send all funds to contract with addr 0?
-    return terminateContract();
-  } elseif (stateTag == StateTags::WaitingOne()) {
+  if (stateTag == StateTags::WaitingOne()) {
     var (addr, pkn) = parseStateWaitingOne(ls);
     var share = globalState.pkn2share(pkn);
     proceedPayout(addr, share + fine);
@@ -23,8 +20,6 @@ cell handle_timeout(
 
     ;; timeout from other party
     throw_unless_(Timeout::WrongParty(), msg_pkn == prevReqPkn);
-
-    var (addr1, addr2) = parseOpenState(openState.begin_parse());
 
     var (reqPayout, _) = parseCloseReq(closeReq);
     if ((now() - prevTimestamp) > timeout) {

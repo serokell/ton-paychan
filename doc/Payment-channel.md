@@ -231,8 +231,6 @@ configuration) and local state `MkStateWaitingBoth`. Transitions possible:
   (it will be used for the payout in the end) and the identity of the
   other party we are waiting for.
   The amount equal to the requester’s share plus deposit is reserved.
-* The deployer of the contract requests it terminated (`MkRequestTimeout`) ->
-  `MkStateTerminated`.
 
 ### Waiting for the second share (`MkStateWaitingOne`)
 
