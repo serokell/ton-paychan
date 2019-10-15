@@ -21,12 +21,10 @@ channel contract is preconfigured and deployed to the blockchain network
 
 The contract starts in the “waiting” state, which means that it is waiting
 for initial commitments from both parties. Alice and Bob each have to send
-to the contract the amount of tokens equal to their share, plus and extra
-deposit that will be locked in order to be used as a fine payment in case of
-misbehaviour. After one of the parties makes their transaction, they can cancel
-contract initialisation and destroy it any time until the other party sends
-their transaction as well. After this the tokens are locked in the contract
-and the payment channel is considered open.
+to the contract the amounts of tokens equal to their shares, plus extra
+deposits that will be locked in order to be used as a fine payment in case of
+misbehaviour. Once both parties contribute their shares, the tokens become
+locked in the contract and the payment channel is considered open.
 
 Now if one of the parties wants to send a payment to the other, they prepare
 a special IOU message that contains the transaction amount and two values that
@@ -46,9 +44,9 @@ bi-directional and receiving a payment _reduces_ the debt of the receiver,
 therefore, as long as the mutual debts are balanced and stay within the
 allowed bounds the channel can remain open for a prolonged period of time.
 
-It is recommended that parties acknowledge the receipt of each micro-payment,
-for example, this can happen naturally by the party performing the services
-that it was paid for; however the security of the channel does not depend
+It is recommended that parties acknowledge the receipt of each micro-payment
+(for example, this can happen naturally by the party performing the services
+that they were paid for); however the security of the channel does not depend
 on this. It is also not a requirement that the IOU messages are delivered
 in order, or, actually, delivered at all. Since every IOU message carries
 all the information about current debts, it is enough to receive the last
@@ -58,17 +56,15 @@ When Alice and Bob expect no further micro-transactions, they start closing
 the channel. It is recommended that they exchange two final IOU messages
 sending 0 to each other in order to confirm that they are in agreement on
 final amounts owed to each other. When ready, Alice sends to the contract
-a payout request and attaches the last IOU she received from Bob. After this
-she is not allowed to send any non-zero payment to Bob. Now Bob has a fixed
-amount of time to either confirm that he agrees with the distribution
-proposed or protest. If he agrees, he sends a confirmation to the contract
-and it distributes the funds according to the distribution proposed by Alice;
-if he believes Alice owes him more than she stated, he can submit a more
-recent IOU from Alice showing a larger amount, in which case the contract
-will perform the distribution according to this newer IOU and fines Alice.
-In case Bob does neither, after the fixed time passes, Alice can request
-the contract to go ahead and distribute the funds according to her proposal
-and fines Bob.
+a payout request and attaches the last IOU she received from Bob. Then Bob
+has a fixed amount of time to either confirm that he agrees with the distribution
+proposed or, if it is not the case, propose another distribution.
+
+In any case, since the distribution proposals are supported by IOUs signed
+by the other party, the payment channel smart-contract will be able to
+decide on a fair distribution that will guarantee that both parties receive
+at least as much funds as they expect to receive, based on the incoming
+payments that they saw.
 
 
 ## Off-chain protocol
@@ -89,14 +85,14 @@ data Signed a = MkSigned
 
 
 data IouPayload = MkIouPayload
-  { channel :: ContractAddress  -- ^ Address of the payment channel contract
+  { channel :: Address  -- ^ Address of the payment channel contract
   , amount :: UInt120  -- ^ This micro-payment amount
   , iou :: UInt248  -- ^ Total transfered to the other party
   , uome :: UInt248  -- ^ Total received from the other party
   }
 -- serialisation:
--- / channel (<= 301) / amount (<= 124) / iou (<= 253) / uome (<= 253) /
--- \ std_addr         \ varuint16       \ varuint32    \ varuint32     \
+-- / channel (= 8 + 256) / amount (<= 124) / iou (<= 253) / uome (<= 253) /
+-- \ uint8 + uint256     \ varuint16       \ varuint32    \ varuint32     \
 
 type Iou = Signed IouPayload
 ```
@@ -160,6 +156,10 @@ To make a new micro-payment:
 2. Add the desired amount to `weOwe`.
 3. Prepare a new IOU with the updated values and send it.
 
+In order to close a channel, the party submits a close request requesting
+a payout of amount equal to `theyOwe - weOwe` together with the last
+IOU they received, if any.
+
 
 ## Contract logic
 
@@ -200,20 +200,31 @@ data ClosingState = MkClosingState
 Users can make the following requests:
 
 ```haskell
-data RawReq = RawReq
-  { pk :: PublicKey
-  , signature :: Bits 512
-  , req :: Request
+-- | Wrapper around the request that contains authentication details
+data RequestMessage = RequestMessage
+  { reqOp :: UInt32  -- ^ Request identifier
+  , pkIndex :: UInt1  -- ^ `0` for party 1 and `1` for party 2
+  , contractAddr :: Address
+  , signature :: Signature
+  , reqBody :: Request
   }
+-- serialisation:
+-- / reqOp (= 32) / pkIndex (= 1) / contractAddr (= 8 + 256) / signature (= 512) /
+-- \ std_addr     \ uint1         \ uint8 + uint256          \ bits              \
+-- ref1 = reqBody (optional)
 
 data Request
-  | MkRequestJoin Addr
-  | MkRequestClose CloseRequest
-  | MkRequestTimeout
+  = MkRequestJoin  -- ^ reqOp = 1
+  | MkRequestClose CloseRequest  -- ^ reqOp = 2
+  | MkRequestTimeout  -- ^ reqOp = 3
+-- serialisation:
+-- reqOp is serialised as part of RequestMessage
+-- the argument, if present, is stored as reqBody
 
 
 data CloseRequest = MkCloseRequest
-  { payout :: Int121  -- ^ Requested payout
+  { payout :: Int121  -- ^ Final channel settlement amount, in other words
+                           how much the other party owes to the requester
   , iou :: Maybe Iou  -- ^ Last IOU from the other party
   }
 ```
@@ -223,10 +234,10 @@ data CloseRequest = MkCloseRequest
 The contract is initialised with its global state (which plays the role of
 configuration) and local state `MkStateWaitingBoth`. Transitions possible:
 
-* One party contributes their share -> `MkStateWaitingOne`. First, the contract
-  check that the amount contributed is enough, that is, it is not smaller than
-  this party’s share plus the fine deposit, otherwise the transaction is
-  rejected.
+* One party contributes their share (`MkRequestJoin`) -> `MkStateWaitingOne`.
+  First, the contract check that the amount contributed is enough, that is,
+  it is not smaller than this party’s share plus the fine deposit, otherwise
+  the transaction is rejected.
   The new state records the address that the funds arrived from
   (it will be used for the payout in the end) and the identity of the
   other party we are waiting for.
@@ -238,9 +249,9 @@ One of the parties has contributed their share and the contract waiting for
 the other one. Possible transitions:
 
 * The first party requests a refund (`MkRequestTimeout`) -> `MkStateTerminated`.
-* The second party contributes their share -> `MkStateOpen`. If the amount
-  is smaller than the party’s share plus the fine deposit, the transaction is
-  rejected. Otherwise, the address of the second party is recorded.
+* The second party contributes their share (`MkRequestJoin`) -> `MkStateOpen`.
+  If the amount is smaller than the party’s share plus the fine deposit, the
+  transaction is rejected. Otherwise, the address of the second party is recorded.
   The amount equal to the same of the two shares plus two deposits is reserved.
 
 ### The channel is open (`MkStateOpen`)
@@ -288,8 +299,9 @@ The contract is waiting for a confirmation from the other party. Transitions:
   `MkStateOpen`.
 * The other party disappears and the original requester forces the channel
   to close (`MkRequestTimeout`). If the amount of time given by `timeout` has
-  passed -> `MkStateTerminated`, where the payment is made according to the
-  request and the other party is fined.
+  passed -> `MkStateTerminated`, where the payment the disappeared party
+  is fined and the payment proceeds as if they submitted a close request
+  with a zero requested payout and no IOU.
   Otherwise the request is rejected.
 
 ### Terminating the contract (`MkStateTerminated`)
@@ -318,8 +330,9 @@ costs incurred by the contract is outside the scope of this specification.
   value attached to the message, therefore message processing costs are borne by
   each party individually for the messages they submit.
 * The contract will always accept any “extra” funds sent to it with simple
-  transfer messages. On termination, the funds will be distributed between the
-  two parties proportional to their shares.
+  transfer messages. On termination, all remaining funds are distributed between
+  the parties in an unspecified way (current implementation sends everything to
+  the first party).
 * The contract logic does not take into account the storage costs,
   therefore it is possible that the final payout will fail if funds go below
   the required level; the parties are expected to agree with each other on
@@ -331,6 +344,61 @@ costs incurred by the contract is outside the scope of this specification.
   is processed. In order to do so, it uses `RAWRESERVE` reserving the amount
   it expects to have in the end, so that if it goes below this level, the
   transaction fails.
+
+
+## Correctness
+
+What follows is not a rigorous mathematical proof of the correctness of the
+protocol, but rather an attempt for a somewhat formal intuitive explanation.
+
+### No unexpected charges
+
+_When the channel is closed and the funds are distributed, a party will receive
+at least as much (or spend at most as little) as they expect._
+
+* The party requests a payout of size `theyOwe - weOwe`. Both values come from
+  its local state: `theyOwe` is the maximum of `iou` values over all IOUs
+  received, while `weOwe` is the true sum of all payments sent by this party.
+* In case the other party requests a matching payout, the contract will perform
+  no further checks and make transfers according to this distribution,
+  so every party will get exactly what they expect to get.
+* Otherwise conflict resolution starts. The contract computes the value owed by
+  this party as the maximum of `(iou - payout)` from their request and `iou` from
+  the other party’s request. The first value equals `(theyOwe - (theyOwe - weOwe))
+  = weOwe`, while `iou` in the other party’s request cannot be larger than
+  `weOwe` as it has to be properly signed and no honest party will sign
+  an IOU indicating that they owe more than `weOwe` stored in their state.
+  The amount owed by the other party is computed as a similar maximum and thus
+  will not be smaller than `iou` from the current party’s request, which is
+  equal to `theyOwe` from the current party’s state, therefore the final payout
+  computed by the contract for this party will be greater or equal to
+  `theyOwe - weOwe`, which is exactly the payout expected by this party.
+
+### No fines for honest parties
+
+_No honest party will be fined regardless of the behaviour of the other party._
+
+A party can be fined in three cases:
+
+* They disappear and stop participating in the protocol. Honest parties do not
+  disappear.
+* They submit an improperly signed IOU. This is not possible because no party
+  will continue processing an off-chain transaction with incorrect signature.
+* They submit a close request, according to which they end up owing to the other
+  party more than they have committed. This can only occur if they send more
+  payments than their share allows, but an honest party must never do this.
+
+### Reliable settlement for honest parties
+
+_If both parties are honest, each of them will end up paying exactly as much
+as they expect, even if some off-chain messages were not delivered._
+
+* Values of `weOwe` stored in each party’s states are authoritative, that is
+  they show the true total sum of payments made by the corresponding party.
+  When resolving a conflict, the contract will respect the `iou - payout =
+  weOwe` values submitted by both contracts, and thus use the true total
+  sums in its balance computation.
+
 
 
 ## Further work
