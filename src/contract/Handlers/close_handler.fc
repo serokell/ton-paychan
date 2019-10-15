@@ -18,21 +18,31 @@ cell createStateClosing(int reqPkn, cell localState, cell closeReq) impure {
      );
 }
 
-cell payoutMatches(
-  slice addr1, slice addr2,
-  int payout,
-  int share1, int share2) impure {
+cell distributeFunds(
+  int balance,
+  int fined1, int fined2,
+  cell openState,
+  cell globalState) impure {
 
-  if ((payout < 0) & (- payout > share1)) {
-    payout = - share1;
+  var (_, _, share1, share2, _, fine, _)
+    = parseGlobalState(globalState);
+
+  var (addr1, addr2) = parseOpenState(openState.begin_parse());
+
+  if ((balance < 0) & (- balance > share1)) {
+    balance = - share1;
   }
 
-  if ((payout > 0) & (payout > share2)) {
-    payout = share2;
+  if ((balance > 0) & (balance > share2)) {
+    balance = share2;
   }
 
-  proceedPayout2(addr1, share1 + payout, addr2, share2 - payout);
-  return terminateContract();
+  performFinalPayout(
+    addr1, share1 + balance + fine - fined1 + fined2,
+    addr2, share2 - balance + fine + fined1 - fined2
+    );
+
+  return terminateContract(addr1);
 }
 
 ;; iou, iou_ok
@@ -80,12 +90,13 @@ cell disputeOccured(
     }
 
     var finalPayout = owes2 - owes1;
-    proceedPayout2(
-      addr1, share1 + finalPayout - fined1 + fined2,
-      addr2, share2 - finalPayout - fined2 + fined1
-      );
 
-    return terminateContract();
+    return distributeFunds(
+      finalPayout,
+      fined1, fined2,
+      openState,
+      globalState
+      );
   }
 }
 
@@ -98,12 +109,11 @@ cell handle_close(
   var ls = localState.begin_parse();
   var stateTag = ls.preload_StateTag();
 
-  var (pk1, pk2, share1, share2, _, fine, _)
-    = parseGlobalState(globalState);
-
   var (payout, mIou) = parseCloseReq(closeReq);
 
   if (stateTag == StateTags::Open()) {
+    var (_, _, share1, share2, _, fine, _)
+      = parseGlobalState(globalState);
     ;; Open -> Closing
     if (msg_pkn == 1) {
       ;; current msg from party1
@@ -138,10 +148,11 @@ cell handle_close(
     }
 
     if (payout == prevPayout) {
-      return payoutMatches(
-        addr1, addr2,
+      return distributeFunds(
         payout,
-        share1, share2
+        0, 0,
+        openState,
+        globalState
         );
     } else {
       if (msg_pkn == 1) {
