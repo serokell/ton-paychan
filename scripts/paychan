@@ -18,7 +18,9 @@ fail () {
   exit 1
 }
 
-paychan_root="$(cd "$(dirname $(readlink "${BASH_SOURCE[0]}"))/.." && pwd )"
+script_src="${BASH_SOURCE[0]}"
+while [ -L "$script_src" ]; do script_src=$(readlink "$script_src"); done
+paychan_root="$(cd "$(dirname "$script_src")/.." && pwd )"
 
 command -v fift > /dev/null || \
   fail 'Make sure `fift` is in PATH.'

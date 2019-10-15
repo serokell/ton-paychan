@@ -7,11 +7,11 @@
 "handlers/payment.fif" include
 
 { ."Usage:" cr
-  ."  " $0 type
-    ." [ key gen"
-    ." | chan [ new | join | close | info | sync ]"
-    ." | payment [ send | recv | info ]"
-    ." ]" cr
+  ."  fift -s " $0 type
+    ." [ key"
+    ." | chan"
+    ." | payment"
+    ." ] ..." cr
   cr
   ."  Generate a new key pair:" cr
     ."    key gen"
