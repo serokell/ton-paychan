@@ -63,7 +63,7 @@ variable _cli_usage
 } : cmdline_getarg'
 // ( okCont failCont -- ? )
 
-{ { abort_usage"Not enough command line arguments" }
+{ { true abort_usage"Not enough command line arguments" }
   cmdline_getarg'
 } : cmdline_fmapgetarg
 // ( okCont -- ? )

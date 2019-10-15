@@ -1,19 +1,17 @@
-library ContractMessages  // Smart-contract address utilities
+// SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+library ContractMessages  // Prepare signed messages for the contract
 
 "TonUtil.fif" include
 "State/GlobalState.fif" include
+
 { <b 1 4 u, b> } : mkWaitingBoth
 
-"build/paychan.boc" constant paychan-code
-
 {
-  // stack: (globalState: Cell) (wc: Int)
-
-  swap
-  // stack: wc, state
-  paychan-code file>B B>boc // TODO: take codepath as param
-  ."Loaded paychan code from " paychan-code type cr
-  swap
+  // stack: (globalState: Cell) (wc: Int) (code: Cell)
+  rot
   // wc, code, globalState
   <b swap ref, mkWaitingBoth ref, b>
   // wc, code, state
@@ -40,14 +38,28 @@ library ContractMessages  // Smart-contract address utilities
   0 9 64 32 + + u,
   b{11} s, // init = Just Right
   2 roll ref, // init ref
-  b{0} s, // body = Left
-  swap <s s, // STM
+  b{1} s, // body = right
+  swap ref, // body
 b>
 } : createInitMessage
 // ( wc addr amount init body -- msg )
 
-{ 1 3 -roll <b b> mkRawReqMsg } : mkJoinMsgBody
-// ( sk pkn wc addr -- msg)
+{
+<b
+  b{01} s, // internalMsgTag ihr_disabled
+  b{1} s, // bounce
+  b{000100} s, // 0 - boundced 00 - msgAddrNone 10 - msgAddrStd 0 - anycast = nothing
+  4 roll 4 roll addr,
+  2 roll Gram,
+  // 9 - empty dict \ ihr_fee = 0 \ fwd_fee = 0 \ created_lt = 0 \created_at = 0
+  // leaving all zeros, will be filled by SENDRAWMSG
+  0 9 64 32 + + u,
+  b{0} s, // init = Nothing
+  b{1} s, // body = Right
+  swap ref, // STM
+b>
+} : createMsg
+// ( wc addr amount body -- msg )
 
 { <b
     5 roll 32 u,
@@ -61,19 +73,7 @@ b>
 } : mkRawReqMsg
 // ( sk opcode pkn wc addr payload -- rawMsg )
 
-{
-<b
-  b{01} s, // internalMsgTag ihr_disabled
-  b{1} s, // bounce
-  b{000100} s, // 0 - boundced 00 - msgAddrNone 10 - msgAddrStd 0 - anycast = nothing
-  4 roll 4 roll addr,
-  2 roll Gram,
-  // 9 - empty dict \ ihr_fee = 0 \ fwd_fee = 0 \ created_lt = 0 \created_at = 0
-  // leaving all zeros, will be filled by SENDRAWMSG
-  0 9 64 32 + + u,
-  b{0} s, // init = Nothing
-  b{0} s, // body = Left
-  swap <s s, // STM
-b>
-} : createMsg
-// ( wc addr amount body -- msg )
+{ 1 3 -roll <b b> mkRawReqMsg } : mkJoinMsgBody
+// ( sk pkn wc addr -- cell )
+{ 2 5 -roll <b 2 roll 121 i, swap ref, b> mkRawReqMsg } : mkCloseMsgBody
+// ( sk pkn wc addr payout miou -- cell )

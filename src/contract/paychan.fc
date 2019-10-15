@@ -46,3 +46,8 @@
     throw(UnknownReqOp());
   }
 }
+
+_ globalState() method_id {
+  var (globalState, localState) = getState();
+  return parseGlobalState(globalState);
+}
