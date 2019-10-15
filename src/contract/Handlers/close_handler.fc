@@ -1,3 +1,7 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
 int isPayoutImpossible(int reqShare, int reqPayout, int otherShare) {
   return (otherShare < reqPayout) | (reqShare < - reqPayout);
 }

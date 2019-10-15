@@ -1,3 +1,7 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
 cell mkOpenState(slice addr1, slice addr2) {
   return begin_cell()
     .store_slice(addr1)

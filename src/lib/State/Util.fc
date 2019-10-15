@@ -1,3 +1,7 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
 int pkn2pk(cell globalState, int pkn) {
   var (pk1, pk2, _, _, _, _, _) =
     parseGlobalState(globalState);

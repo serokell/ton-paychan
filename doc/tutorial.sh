@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+#!/usr/bin/env bash
 
 set -e
 

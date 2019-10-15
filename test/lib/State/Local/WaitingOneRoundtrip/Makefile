@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+#
+# SPDX-License-Identifier: MPL-2.0
+
 .PHONY: test/lib/State/Local/WaitingOneRoundtrip/roundtripTest.fif
 test/lib/State/Local/WaitingOneRoundtrip/roundtripTest.fif: test/lib/State/Local/WaitingOneRoundtrip/roundtripTest.asm.gen
 	$(fift_compiler)  -I$(fift_lib):src/lib $@
