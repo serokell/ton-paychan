@@ -6,8 +6,8 @@ cell mkStateTerminated() {
     .end_cell();
 }
 
-
-cell terminateContract() impure {
-  ;; TODO: send all remaining funds somewhere
+;; addr = where to send the remaining funds
+cell terminateContract(slice addr) impure {
+  send_raw_message(makePayoutMessage(addr, 0), 0x80);
   return mkStateTerminated();
 }

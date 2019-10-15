@@ -12,8 +12,8 @@ cell handle_timeout(
   if (stateTag == StateTags::WaitingOne()) {
     var (addr, pkn) = parseStateWaitingOne(ls);
     var share = globalState.pkn2share(pkn);
-    proceedPayout(addr, share + fine);
-    return terminateContract();
+    sendSingleShare(addr, share + fine);
+    return terminateContract(addr);
   } elseif (stateTag == StateTags::Closing()) {
     var (prevReqPkn, openState, closeReq, prevTimestamp) =
       parseStateClosing(ls);

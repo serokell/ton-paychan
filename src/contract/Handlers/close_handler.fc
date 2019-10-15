@@ -18,8 +18,8 @@ cell createStateClosing(int reqPkn, cell localState, cell closeReq) impure {
      );
 }
 
-cell payoutMatches(
-  int payout,
+cell distributeFunds(
+  int balance,
   int fined1, int fined2,
   cell openState,
   cell globalState) impure {
@@ -29,19 +29,20 @@ cell payoutMatches(
 
   var (addr1, addr2) = parseOpenState(openState.begin_parse());
 
-  if ((payout < 0) & (- payout > share1)) {
-    payout = - share1;
+  if ((balance < 0) & (- balance > share1)) {
+    balance = - share1;
   }
 
-  if ((payout > 0) & (payout > share2)) {
-    payout = share2;
+  if ((balance > 0) & (balance > share2)) {
+    balance = share2;
   }
 
-  proceedPayout2(
-    addr1, share1 + payout + fine - fined1 + fined2,
-    addr2, share2 - payout + fine + fined1 - fined2
+  performFinalPayout(
+    addr1, share1 + balance + fine - fined1 + fined2,
+    addr2, share2 - balance + fine + fined1 - fined2
     );
-  return terminateContract();
+
+  return terminateContract(addr1);
 }
 
 ;; iou, iou_ok
@@ -90,7 +91,7 @@ cell disputeOccured(
 
     var finalPayout = owes2 - owes1;
 
-    return payoutMatches(
+    return distributeFunds(
       finalPayout,
       fined1, fined2,
       openState,
@@ -147,7 +148,7 @@ cell handle_close(
     }
 
     if (payout == prevPayout) {
-      return payoutMatches(
+      return distributeFunds(
         payout,
         0, 0,
         openState,
