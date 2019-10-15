@@ -50,37 +50,48 @@ library Handlers_new
   // ( theirKeyName ourKeyName ourSk ourShare ourPk theirPk ourShare theirShare )
 
   cmdline_getarg_int  // timeout (seconds)
-
+  // ( theirKeyName ourKeyName ourSk ourShare ourPk theirPk ourShare theirShare timeout )
   cmdline_getarg_int  // fineAmount (nanograms)
+  dup 6 -roll
+  // ( theirKeyName ourKeyName ourSk ourShare fine ourPk theirPk ourShare theirShare timeout fine )
+  cmdline_getarg_int  // extraFuel (nanograms)
+  6 -roll
+  // ( theirKeyName ourKeyName ourSk ourShare fine extraFuel ourPk theirPk ourShare theirShare timeout fine )
 
   // XXX: Undocumented extra argument for debugging
   // nonce
-  // { (number) 1 = not abort_usage"Not an integer" } { now } cmdline_getarg'
-  now
+  { (number) 1 = not abort_usage"Not an integer" } { now } cmdline_getarg'
+  // ( theirKeyName ourKeyName ourSk ourShare fine extraFuel ourPk theirPk ourShare theirShare timeout fine nonce )
 
   mkGlobalState
-  // ( theirKeyName ourKeyName ourSk ourShare globalState )
-
-  dup getGlobalStateFine 3 -roll
+  // ( theirKeyName ourKeyName ourSk ourShare fine extraFuel globalState )
 
   dup
   0 contract-code createStateInit // TODO: take workchain as param
-  // ( theirKN ourKN ourSk ourShare globalState stateInit wc addr )
-  2dup 7 pick -rot
-  0 2 -roll // pkn = 0
+  // ( theirKN ourKN ourSk ourShare fine extraFuel globalState stateInit wc addr )
+  2dup 9 pick -rot
+  // ( theirKN ourKN ourSk ourShare fine extraFuel globalState stateInit wc addr ourSk wc addr )
+  0 -rot // pkn = 0
+  // ( theirKN ourKN ourSk ourShare fine extraFuel globalState stateInit wc addr ourSk 0 wc addr )
   mkJoinMsgBody
-  // ( theirKN ourKN ourSk ourShare globalState stateInit wc addr join-body )
+  // ( theirKN ourKN ourSk ourShare fine extraFuel globalState stateInit wc addr join-body )
   -rot 2dup
-  7 roll // ourShare
+  // ( theirKN ourKN ourSk ourShare fine extraFuel globalState stateInit join-body wc addr wc addr )
+  9 roll // ourShare
   9 roll // fine
+  9 roll // extraFuel
   +
-  cmdline_getarg_int // extra-fuel (nanograms)
   +
+  // ( theirKN ourKN ourSk globalState stateInit join-body wc addr wc addr sum )
+
   6 roll 6 roll
+  // ( theirKN ourKN ourSk globalState wc addr wc addr sum stateInit join-body )
   createInitMessage
+  // ( theirKN ourKN ourSk globalState wc addr initMsg )
   boc>B "init-message.boc" tuck B>file
   ."Init-message written to file `" type ."`" cr
-  // ( theirKN ourKN ourSk globalState wc addr initMsg )
+  // ( theirKN ourKN ourSk globalState wc addr )
+
   2 pick -rot
   // ( theirKeyname ourKeyName ourSk globalState globalState wc addr )
   2dup 5 -roll 5 -roll

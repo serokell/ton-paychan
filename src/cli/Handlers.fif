@@ -32,8 +32,10 @@
     ."  (Writes joining request to `paychan.join`)" cr
   cr
   ."  Join a payment channel created by someone else:" cr
-    ."    chan join <our key name> <their key name> <extra fuel>"
-
+    ."    chan join"
+    ." <our key name>"
+    ." <their key name>"
+    ." <extra fuel>"
     cr
     ."  (Reads joining request from `paychan.join`)" cr
   cr
