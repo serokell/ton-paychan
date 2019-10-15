@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+
+SPDX-License-Identifier: MPL-2.0
+-->
+
 # TON Payment Channel Tutorial
 
 A payment channel is a contract that allows two parties to exchange payments
