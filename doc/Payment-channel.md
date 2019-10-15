@@ -327,8 +327,9 @@ costs incurred by the contract is outside the scope of this specification.
   value attached to the message, therefore message processing costs are borne by
   each party individually for the messages they submit.
 * The contract will always accept any “extra” funds sent to it with simple
-  transfer messages. On termination, the funds will be distributed between the
-  two parties proportional to their shares.
+  transfer messages. On termination, all remaining funds are distributed between
+  the parties in an unspecified way (current implementation sends everything to
+  the first party).
 * The contract logic does not take into account the storage costs,
   therefore it is possible that the final payout will fail if funds go below
   the required level; the parties are expected to agree with each other on
@@ -340,6 +341,9 @@ costs incurred by the contract is outside the scope of this specification.
   is processed. In order to do so, it uses `RAWRESERVE` reserving the amount
   it expects to have in the end, so that if it goes below this level, the
   transaction fails.
+
+
+## Correctness
 
 
 ## Further work
