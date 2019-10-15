@@ -40,7 +40,7 @@ cp bob/bob.pk alice/
 if [ "$reproducible" -ne 0 ]; then
   runalice paychan chan new alice 2000000000 bob 1000000000 86400 500000000 100000000 566
 else
-  runalice paychan chan new alice 2000000000 bob 1000000000 86400 500000000
+  runalice paychan chan new alice 2000000000 bob 1000000000 86400 500000000 100000000
 fi
 runalice mv paychan.join ../bob/
 
