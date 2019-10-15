@@ -61,6 +61,7 @@ cell distributeFunds(
 cell disputeOccured(
   cell closeReq1,
   cell closeReq2,
+  int fined1, fined2,
   cell globalState,
   cell openState) {
 
@@ -81,12 +82,11 @@ cell disputeOccured(
   if ((~ iou_ok1) & (~ iou_ok2)) {
     return mkStateOpen(addr1, addr2);
   } else {
-    var fined1 = 0; var fined2 = 0;
     if (~ iou_ok1) {
-      fined1 = fine;
+      fined1 += fine;
     }
     if (~ iou_ok2) {
-      fined2 = fine;
+      fined2 += fine;
     }
 
     var finalPayout = owes2 - owes1;
@@ -159,6 +159,7 @@ cell handle_close(
         return disputeOccured(
           closeReq,
           prevCloseReq,
+          0, 0,
           globalState,
           openState
           );
@@ -166,6 +167,7 @@ cell handle_close(
         return disputeOccured(
           prevCloseReq,
           closeReq,
+          0, 0,
           globalState,
           openState
           );

@@ -27,6 +27,7 @@ cell handle_timeout(
         return disputeOccured(
           closeReq,
           emptyCloseReq(),
+          0, fine,
           globalState,
           openState
           );
@@ -34,6 +35,7 @@ cell handle_timeout(
         return disputeOccured(
           emptyCloseReq(),
           closeReq,
+          fine, 0,
           globalState,
           openState
           );
