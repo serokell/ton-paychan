@@ -156,6 +156,10 @@ To make a new micro-payment:
 2. Add the desired amount to `weOwe`.
 3. Prepare a new IOU with the updated values and send it.
 
+In order to close a channel, the party submits a close request requesting
+a payout of amount equal to `theyOwe - weOwe` together with the last
+IOU they received, if any.
+
 
 ## Contract logic
 
@@ -219,7 +223,8 @@ data Request
 
 
 data CloseRequest = MkCloseRequest
-  { payout :: Int121  -- ^ Requested payout
+  { payout :: Int121  -- ^ Final channel settlement amount, in other words
+                           how much the other party owes to the requester
   , iou :: Maybe Iou  -- ^ Last IOU from the other party
   }
 ```
@@ -344,6 +349,58 @@ costs incurred by the contract is outside the scope of this specification.
 
 
 ## Correctness
+
+What follows is not a rigorous mathematical proof of the correctness of the
+protocol, but rather an attempt for a somewhat formal intuitive explanation.
+
+### No unexpected charges
+
+_When the channel is closed and the funds are distributed, a party will receive
+at least as much (or spend at most as little) as they expect._
+
+* The party requests a payout of size `theyOwe - weOwe`. Both values come from
+  its local state: `theyOwe` is the maximum of `iou` values over all IOUs
+  received, while `weOwe` is the true sum of all payments sent by this party.
+* In case the other party requests a matching payout, the contract will perform
+  no further checks and make transfers according to this distribution,
+  so every party will get exactly what they expect to get.
+* Otherwise conflict resolution starts. The contract computes the value owed by
+  this party as the maximum of `(iou - payout)` from their request and `iou` from
+  the other party’s request. The first value equals `(theyOwe - (theyOwe - weOwe))
+  = weOwe`, while `iou` in the other party’s request cannot be larger than
+  `weOwe` as it has to be properly signed and no honest party will sign
+  an IOU indicating that they owe more than `weOwe` stored in their state.
+  The amount owed by the other party is computed as a similar maximum and thus
+  will not be smaller than `iou` from the current party’s request, which is
+  equal to `theyOwe` from the current party’s state, therefore the final payout
+  computed by the contract for this party will be greater or equal to
+  `theyOwe - weOwe`, which is exactly the payout expected by this party.
+
+### No fines for honest parties
+
+_No honest party will be fined regardless of the behaviour of the other party._
+
+A party can be fined in three cases:
+
+* They disappear and stop participating in the protocol. Honest parties do not
+  disappear.
+* They submit an improperly signed IOU. This is not possible because no party
+  will continue processing an off-chain transaction with incorrect signature.
+* They submit a close request, according to which they end up owing to the other
+  party more than they have committed. This can only occur if they send more
+  payments than their share allows, but an honest party must never do this.
+
+### Reliable settlement for honest parties
+
+_If both parties are honest, each of them will end up paying exactly as much
+as they expect, even if some off-chain messages were not delivered._
+
+* Values of `weOwe` stored in each party’s states are authoritative, that is
+  they show the true total sum of payments made by the corresponding party.
+  When resolving a conflict, the contract will respect the `iou - payout =
+  weOwe` values submitted by both contracts, and thus use the true total
+  sums in its balance computation.
+
 
 
 ## Further work
