@@ -289,7 +289,7 @@ nip -trailing0 } : (.GRwS)
   3 roll 3 roll
   ."Payment: (channel = " .addr' .")" cr
   swap
-  ."  Amount = " .GR cr
+  ."  Amount = " .GRnw cr
   - swap { negate } ifnot
   ."  New balance = " .balance cr
 } : .iouPayload
@@ -308,7 +308,7 @@ nip -trailing0 } : (.GRwS)
           .iouPayload
           ."<- Incoming" cr
         }
-        { fail"Could not verify the signature"
+        { abort"Could not verify the signature"
         }
       cond
     }
