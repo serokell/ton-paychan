@@ -181,6 +181,26 @@ Gram 10 / constant extra-fuel-default
   // ( cliState ourPkName )
   load-key-pair drop swap
   // ( ourSk cliState )
+  swap
+  over getCliStatePkn
+  2 pick getCliStateAddr
+  // ( cliState ourSk pkn wc addr )
+
+  mkTimeoutMsgBody
+  over getCliStateAddr
+  extra-fuel-default // grams sent with message, sender pays for transfer
+  3 roll
+  createMsg
+  boc>B "timeout-message.boc" tuck B>file
+ ."Saved timeout message for smartcontract to " type cr
+} :cmdline cli_chan_timeout
+
+{ cmdline_getarg  // channel address
+  hex$>addr' { fail"Invalid address" } ifnot
+  loadCliStateNice parseCliStateNice drop
+  // ( cliState ourPkName )
+  load-key-pair drop swap
+  // ( ourSk cliState )
 
   parseCliState swap drop 0 swap
   // ( ourSk wc addr 0 paymentsState )

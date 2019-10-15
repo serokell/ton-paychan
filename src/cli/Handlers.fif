@@ -43,6 +43,10 @@
     ." <channel address>"
     cr
   cr
+  ."  Request a payment channel to close with timeout:" cr
+    ."    chan timeout"
+    ." <channel address>"
+  cr
   ."  Show information about a channel we created or joined:" cr
     ."    chan info"
     ." <channel address>"

@@ -77,3 +77,5 @@ b>
 // ( sk pkn wc addr -- cell )
 { 2 6 -roll <b 3 roll 121 i, -rot { ref, } if b> mkRawReqMsg } : mkCloseMsgBody
 // ( sk pkn wc addr payout miou bool -- cell )
+{ 3 3 -roll <b b> mkRawReqMsg } : mkTimeoutMsgBody
+// ( sk pkn wc addr -- cell )
