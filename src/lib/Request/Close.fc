@@ -15,15 +15,22 @@
 }
 
 
-cell mkCloseReq(int payout, cell miou) {
+cell mkCloseReqWithIou(int payout, cell iou) {
   return
     begin_cell()
       .store_int(payout, 121)
-      .store_ref(miou)
+      .store_ref(iou)
       .end_cell();
 }
 
-cell emptyCloseReq() {
-  var empty_cell = begin_cell().end_cell();
-  return mkCloseReq(0, empty_cell);
+cell mkCloseReqWoIou(int payout) {
+  return
+    begin_cell()
+      .store_int(payout, 121)
+      .end_cell();
+}
+
+
+cell emptyCloseReq() impure {
+  return mkCloseReqWoIou(0);
 }

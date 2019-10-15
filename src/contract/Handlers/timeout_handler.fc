@@ -22,7 +22,7 @@ cell handle_timeout(
     throw_unless_(Timeout::WrongParty(), msg_pkn == prevReqPkn);
 
     var (reqPayout, _) = parseCloseReq(closeReq);
-    if ((now() - prevTimestamp) > timeout) {
+    if ((now() - prevTimestamp) >= timeout) {
       if (prevReqPkn == 1) {
         return disputeOccured(
           closeReq,
