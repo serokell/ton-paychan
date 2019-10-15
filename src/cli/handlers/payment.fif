@@ -106,7 +106,7 @@
     }
   cond
   7 pick ?dup
-    { ."Payment received. Amount = " ._ cr }
+    { ."Payment received. Amount = " .GRnw cr }
     { ."This was a state sync message. State synchronised." cr }
   cond
   mkCliState
@@ -118,7 +118,7 @@
   1 pick getIouPayloadUome
   -
   dup 0< { fail"Illegal payment state" } if
-  0> { ."Note: the other party is missing some of our payments." } if
+  0> { ."Note: the other party is missing some of our payments." cr } if
 
   _receivePayment
 } : _processPayment

@@ -6,7 +6,7 @@ set -e
 # Setup env
 #
 
-reproducible=0
+reproducible=1
 
 mkdir alice
 mkdir bob

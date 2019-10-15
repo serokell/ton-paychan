@@ -6,11 +6,9 @@
 # Configure paths
 #
 
-ton_src = ../ton
-
-fift_lib = $(ton_src)/crypto/fift/lib
+fift_lib = ./vendor/fift
 fift_compiler = fift
-func_lib = $(ton_src)/crypto/smartcont/stdlib.fc
+func_lib = ./vendor/func/stdlib.fc
 func_compiler = func
 
 ##

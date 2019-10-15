@@ -16,8 +16,8 @@ do not require the parties to trust each other.
 
 ### How it works
 
-* The payment channel is preconfigured with the addresses of the two parties
-  involved and deployed.
+* The payment channel is deployed and configured with the addresses of the
+  two parties involved.
 * Both parties contribute their shares by sending them to the contract.
 * All further transactions happen off-chain by exchanging signed messages
   in a special format that facilitates keeping track of liabilities.
@@ -28,9 +28,8 @@ do not require the parties to trust each other.
 
 * If one of the parties disappears and stops communicating according to the
   protocol, the locked funds are released after a predetermined timeout.
-* If one of the parties behaves dishonestly, the other party can terminate
-  the channel and get the funds redistributed according to the last known
-  good state before the other party started behaving dishonestly.
+* Even if one of the parties behaves dishonestly, the other party will get
+  at least as much funds as they expect to get.
 * Optionally, misbehaviour (disappearing or being actively dishonest)
   can be penalised by incurring a fine on the misbehaving party.
 
@@ -42,25 +41,14 @@ do not require the parties to trust each other.
 
 ## Use
 
-### Configuring, building, and deploying the contract
+### Building the contract code
 
-TODO
+* `make`
 
-### Initialising the payment channel
 
-TODO
+### Using the contract
 
-### Sending and receiving micro-transactions
-
-TODO
-
-### Closing the payment channel
-
-TODO
-
-### Terminating the payment channel due to misbehaviour
-
-TODO
+See the [Tutorial](doc/Tutorial.md).
 
 
 ## About Serokell

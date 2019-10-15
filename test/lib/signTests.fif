@@ -22,4 +22,5 @@
   mkSigned
   newkeypair swap drop
   checkSignedQ abort"Did not return false"
+  drop
 } @test signWrongKey
