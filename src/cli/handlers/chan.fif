@@ -9,6 +9,7 @@ library Handlers_new
 
 "../CliState.fif" include
 
+Gram 10 / constant extra-fuel-default
 
 { <b swap ref, -rot addr, b>
   2 boc+>B
@@ -33,7 +34,7 @@ library Handlers_new
   load-key-pair
   // ( ourKeyName ourSk ourPk )
 
-  cmdline_getarg_int  // share our (grams)
+  cmdline_getarg_gram  // share our (grams)
   tuck
   // ( ourKeyName ourSk share ourPk share )
 
@@ -45,16 +46,16 @@ library Handlers_new
   load-key-public
   // ( theirKeyName ourKeyName ourSk ourShare ourPk ourShare theirPk )
 
-  cmdline_getarg_int  // share their (nanograms)
+  cmdline_getarg_gram  // share their (nanograms)
   rot swap
   // ( theirKeyName ourKeyName ourSk ourShare ourPk theirPk ourShare theirShare )
 
   cmdline_getarg_int  // timeout (seconds)
   // ( theirKeyName ourKeyName ourSk ourShare ourPk theirPk ourShare theirShare timeout )
-  cmdline_getarg_int  // fineAmount (nanograms)
+  cmdline_getarg_gram  // fineAmount (nanograms)
   dup 6 -roll
   // ( theirKeyName ourKeyName ourSk ourShare fine ourPk theirPk ourShare theirShare timeout fine )
-  cmdline_getarg_int  // extraFuel (nanograms)
+  cmdline_getarg_gram  // extraFuel (nanograms)
   6 -roll
   // ( theirKeyName ourKeyName ourSk ourShare fine extraFuel ourPk theirPk ourShare theirShare timeout fine )
 
@@ -128,8 +129,8 @@ library Handlers_new
   // ( ourKeyName theirKeyName globalState wc addr wc addr stmbody )
   5 pick getGlobalStateShare2
   6 pick getGlobalStateFine
+  extra-fuel-default
   +
-  cmdline_getarg_int // extra-fuel (nanograms)
   +
   swap
   // ( ourKN theirKN globalState wc addr wc addr share2 stmbody )
@@ -167,7 +168,7 @@ library Handlers_new
   // ( cliState ourSk pkn wc addr balance (iou true | false))
   mkCloseMsgBody
   over getCliStateAddr
-  cmdline_getarg_int // fuel TODO: make cmdline_getarg_gram
+  extra-fuel-default // grams sent with message, sender pays for transfer
   3 roll
   createMsg
   boc>B "close-message.boc" tuck B>file

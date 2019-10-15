@@ -6,7 +6,7 @@ set -e
 # Setup env
 #
 
-reproducible=1
+reproducible=0
 
 mkdir alice
 mkdir bob
@@ -38,9 +38,9 @@ cp bob/bob.pk alice/
 
 # Start the channel
 if [ "$reproducible" -ne 0 ]; then
-  runalice paychan chan new alice 2000000000 bob 1000000000 86400 500000000 100000000 566
+  runalice paychan chan new alice 2 bob 1 86400 0.5 0.1 566
 else
-  runalice paychan chan new alice 2000000000 bob 1000000000 86400 500000000 100000000
+  runalice paychan chan new alice 2 bob 1 86400 0.5 0.1
 fi
 runalice mv paychan.join ../bob/
 
@@ -49,17 +49,17 @@ addr=${addr#alice/}
 addr=${addr%.state}
 runalice paychan chan info "$addr"
 
-runbob paychan chan join bob alice 10000000
+runbob paychan chan join bob alice
 
 # Alice makes payments
-runalice paychan payment send "$addr" 100
+runalice paychan payment send "$addr" 0.1
 runalice mv paychan.pay ../bob/1.pay
 
 runalice paychan chan info "$addr"
 
-runalice paychan payment send "$addr" 200
+runalice paychan payment send "$addr" 0.2
 runalice mv paychan.pay ../bob/2.pay
-runalice paychan payment send "$addr" 300
+runalice paychan payment send "$addr" 0.3
 runalice mv paychan.pay ../bob/3.pay
 
 runalice paychan chan info "$addr"
@@ -82,15 +82,15 @@ runbob paychan payment receive "$addr"
 runbob paychan chan info "$addr"
 
 # Bob makes payments
-runbob paychan payment send "$addr" 150
+runbob paychan payment send "$addr" 0.15
 runbob mv paychan.pay ../alice/1.pay
-runbob paychan payment send "$addr" 250
+runbob paychan payment send "$addr" 0.25
 runbob mv paychan.pay ../alice/2.pay
 
 # Alice receives one and sends it back
 runalice mv 1.pay paychan.pay
 runalice paychan payment receive "$addr"
-runalice paychan payment send "$addr" 150
+runalice paychan payment send "$addr" 0.15
 runalice mv paychan.pay ../bob/
 runbob paychan payment receive "$addr"
 
@@ -107,7 +107,7 @@ runalice paychan payment receive "$addr"
 
 # Close the channel
 runalice paychan chan info "$addr"
-runalice paychan chan close "$addr" 100000000
+runalice paychan chan close "$addr"
 
 runbob paychan chan info "$addr"
-runbob paychan chan close "$addr" 100000000
+runbob paychan chan close "$addr"

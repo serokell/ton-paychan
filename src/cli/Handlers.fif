@@ -35,14 +35,12 @@
     ."    chan join"
     ." <our key name>"
     ." <their key name>"
-    ." <extra fuel>"
     cr
     ."  (Reads joining request from `paychan.join`)" cr
   cr
   ."  Request a payment channel to close:" cr
     ."    chan close"
     ." <channel address>"
-    ." <fuel>"
     cr
   cr
   ."  Show information about a channel we created or joined:" cr

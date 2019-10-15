@@ -4,6 +4,8 @@
 
 library Cmdline  // Working with command-line arguments
 
+"TonUtil.fif" include
+
 
 1 box constant _next_arg
 "cli" box constant _cur_prefix
@@ -80,6 +82,12 @@ variable _cli_usage
   cmdline_fmapgetarg
 } : cmdline_getarg_int
 // ( -- n )
+
+{ { $>GR }
+  cmdline_fmapgetarg
+} : cmdline_getarg_gram
+// ( -- n )
+
 
 { cmdline_getarg
   _cur_prefix @ +"_" swap $+

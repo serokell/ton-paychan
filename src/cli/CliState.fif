@@ -125,9 +125,29 @@ library CliState  // The state of the cli tool
 } : getPaymentsStateBalance
 // ( paymentsState -- balance )
 
-{ dup 0> { ."+" } if
-  ._
-} : .balance
+{ dup 0>
+  { drop +"+" }
+  { 0<
+    { +"-" }
+    if
+  }
+  cond
+} : signPlus
+// ( i -- S )
+
+{ dup abs <# ' # 9 times char . hold #s rot signPlus #>
+nip -trailing0 } : (.GRwS)
+// ( i -- S )
+
+
+{ (.GRwS) ."GR$" type } : .GRwS
+// ( i -- )
+
+{ (.GR) ."GR$" type } : .GRnw
+// ( i -- )
+
+
+{ .GRwS } : .balance
 // ( i -- )
 
 
@@ -249,13 +269,13 @@ library CliState  // The state of the cli tool
   swap
   parseGlobalState
   drop
-  ."Shares: " 3 roll ._ ." - " 2 roll ._ cr
-  1 roll ."Timeout: " ._ ." (fine: " ._ .")" cr
+  ."Shares: " 3 roll .GRnw ." - " 2 roll .GRnw cr
+  1 roll ."Timeout: " ._ ." (fine: " .GRnw .")" cr
   cr
   drop drop
   dup dup getPaymentsStateTheyOwe swap dup getPaymentsStateWeOwe
-  swap getPaymentsStateBalance ."Balance: " .balance ." (" ._ ." - " ._ .")" cr
-  getPaymentsStateMissingAmount ."Missing: " ._ cr
+  swap getPaymentsStateBalance ."Balance: " .balance ." (" .GRnw ." - " .GRnw .")" cr
+  getPaymentsStateMissingAmount ."Missing: " .GRnw cr
   drop drop
 } : .cliStateNice
 // ( cliStateNice -- )
@@ -269,7 +289,7 @@ library CliState  // The state of the cli tool
   3 roll 3 roll
   ."Payment: (channel = " .addr' .")" cr
   swap
-  ."  Amount = " ._ cr
+  ."  Amount = " .GR cr
   - swap { negate } ifnot
   ."  New balance = " .balance cr
 } : .iouPayload
