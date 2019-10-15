@@ -1,3 +1,7 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
 ;; payout, maybe iou
 (int, cell) parseCloseReq(cell closeReq) {
   var s = closeReq.begin_parse();

@@ -1,3 +1,7 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
 cell makePayoutMessage(addr, grams) impure {
   ;; int_msg_info$0
   ;;   ihr_disabled:Bool = 1

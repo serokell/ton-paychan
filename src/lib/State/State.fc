@@ -1,3 +1,7 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
 ;; globalState, localState
 (cell, cell) getState() impure {
   var s = get_data().begin_parse();

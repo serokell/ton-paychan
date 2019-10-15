@@ -1,3 +1,7 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
 _ main(slice addr1, slice addr2) {
   var c = mkStateOpen(addr1, addr2);
   var openState = getOpenState(c);

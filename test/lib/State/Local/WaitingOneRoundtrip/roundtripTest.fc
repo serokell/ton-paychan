@@ -1,3 +1,7 @@
+;; SPDX-FileCopyrightText: 2019 Serokell <https://serokell.io>
+;;
+;; SPDX-License-Identifier: MPL-2.0
+
 _ main(slice addr, int pk) {
   var c = mkStateWaitingOne(addr, pk);
   return parseStateWaitingOne(c.begin_parse());
