@@ -1,9 +1,18 @@
 ;; payout, maybe iou
 (int, cell) parseCloseReq(cell closeReq) {
   var s = closeReq.begin_parse();
-  return (s~load_int(121), s~load_ref());
+  var payout = s~load_int(121);
+  if (s.slice_refs_empty?()) {
+    var empty_cell = begin_cell().end_cell();
+    return (payout, empty_cell);
+  } else {
+    var ref_cell =
+      begin_cell()
+      .store_ref(s~load_ref())
+      .end_cell();
+    return (payout, ref_cell);
+  }
 }
-
 
 
 cell mkCloseReq(int payout, cell miou) {
@@ -15,6 +24,6 @@ cell mkCloseReq(int payout, cell miou) {
 }
 
 cell emptyCloseReq() {
-  var nothing = begin_cell().store_uint(0, 1).end_cell();
-  return mkCloseReq(0, nothing);
+  var empty_cell = begin_cell().end_cell();
+  return mkCloseReq(0, empty_cell);
 }

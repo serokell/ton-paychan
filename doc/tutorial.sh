@@ -107,7 +107,7 @@ runalice paychan payment receive "$addr"
 
 # Close the channel
 runalice paychan chan info "$addr"
-runalice paychan chan close "$addr"
+runalice paychan chan close "$addr" 100000000
 
 runbob paychan chan info "$addr"
-runbob paychan chan close "$addr"
+runbob paychan chan close "$addr" 100000000

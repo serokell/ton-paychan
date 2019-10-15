@@ -164,12 +164,10 @@ library Handlers_new
   // ( cliState ourSk pkn wc addr paymentsState )
 
   dup getPaymentsStateBalance swap getPaymentsStateIou
-  // ( ourSk pkn balance (iou true | false) )
-  { <b b{1} s, swap <s s, b> } { <b b{0} b> } cond
-  // ( cliState ourSk pkn wc addr balance miou )
+  // ( cliState ourSk pkn wc addr balance (iou true | false))
   mkCloseMsgBody
   over getCliStateAddr
-  Gram
+  cmdline_getarg_int // fuel TODO: make cmdline_getarg_gram
   3 roll
   createMsg
   boc>B "close-message.boc" tuck B>file

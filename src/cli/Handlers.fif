@@ -42,6 +42,7 @@
   ."  Request a payment channel to close:" cr
     ."    chan close"
     ." <channel address>"
+    ." <fuel>"
     cr
   cr
   ."  Show information about a channel we created or joined:" cr

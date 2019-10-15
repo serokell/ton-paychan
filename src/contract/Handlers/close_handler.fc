@@ -38,13 +38,12 @@ cell payoutMatches(
 ;; iou, iou_ok
 (int, int) parseMIou(cell miou, int pk) impure {
   var s = miou.begin_parse();
-  var maybeTag = s~load_uint(1);
-  if (maybeTag == 0) {
+
+  if (s.slice_refs_empty?()) {
     return (0, true);
   } else {
-    var iouS = s~load_bits(slice_bits(s));
-    var iouC = begin_cell().store_slice(iouS).end_cell();
-    var (iouTotal, iou_ok) = parseIouQ(iouC, pk);
+    var iouC = s~load_ref();
+    var (iouTotal, iou_ok) = parseIouQ(iouC, pk); ;; problem here
     return (iouTotal, iou_ok);
   }
 }

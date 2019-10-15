@@ -75,5 +75,5 @@ b>
 
 { 1 3 -roll <b b> mkRawReqMsg } : mkJoinMsgBody
 // ( sk pkn wc addr -- cell )
-{ 2 5 -roll <b 2 roll 121 i, swap ref, b> mkRawReqMsg } : mkCloseMsgBody
-// ( sk pkn wc addr payout miou -- cell )
+{ 2 6 -roll <b 3 roll 121 i, -rot { ref, } if b> mkRawReqMsg } : mkCloseMsgBody
+// ( sk pkn wc addr payout miou bool -- cell )
