@@ -13,8 +13,7 @@
 { cmdline_getarg  // channel address
   hex$>addr' { fail"Invalid address" } ifnot
 
-  cmdline_getarg  // amount
-  (number) 1 = { fail"Amount must be an integer" } ifnot
+  cmdline_getarg_gram  // amount
   dup 0> { fail"Amount must be positive" } ifnot
 
   // ( wc addr amount )

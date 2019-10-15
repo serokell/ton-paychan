@@ -22,11 +22,12 @@ cell handle_timeout(
     throw_unless_(Timeout::WrongParty(), msg_pkn == prevReqPkn);
 
     var (reqPayout, _) = parseCloseReq(closeReq);
-    if ((now() - prevTimestamp) > timeout) {
+    if ((now() - prevTimestamp) >= timeout) {
       if (prevReqPkn == 1) {
         return disputeOccured(
           closeReq,
           emptyCloseReq(),
+          0, fine,
           globalState,
           openState
           );
@@ -34,6 +35,7 @@ cell handle_timeout(
         return disputeOccured(
           emptyCloseReq(),
           closeReq,
+          fine, 0,
           globalState,
           openState
           );
