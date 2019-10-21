@@ -28,7 +28,7 @@ library Address  // Smart-contract address utilities
     { swap
       hex$>u
         { true }
-        { nip false }
+        { drop false }
       cond
     }
     { false }
