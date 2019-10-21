@@ -7,6 +7,17 @@ library Address  // Smart-contract address utilities
 "String.fif" include
 "ContractMessages.fif" include
 
+
+{ rot
+  =
+  ' = { 2drop false } cond
+} : addr=
+// ( wc1 addr1 wc2 addr2 -- bool )
+
+{ 8 i@+ 256 u@
+} : addr@
+// ( s -- wc addr )
+
 { 8 i@+ 256 u@+
 } : addr@+
 // ( s -- wc addr s )

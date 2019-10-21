@@ -138,6 +138,10 @@
   swap checkSigned
   // ( cliStateNice iou cliState iouPayload )
 
+  dup getIouPayloadAddr
+  5 pick getCliStateNiceCliState getCliStateAddr
+  addr= { fail"The payment is for a different channel" } ifnot
+
   _processPayment
   // ( cliStateNice cliState' )
 
