@@ -1,8 +1,10 @@
+{ 0 word drop 0 'nop } :: //
+
 // SPDX-FileCopyrightText: 2017-2019 Telegram Systems LLP
 //
 // SPDX-License-Identifier: LGPL-2.0-or-later
 
-{ 0 word drop 0 'nop } :: //
+
 { char " word 1 { swap { abort } if drop } } ::_ abort"
 { { bl word dup "" $= abort"comment extends after end of file" "*/" $= } until 0 'nop } :: /*
 // { bl word 1 2 ' (create) } "::" 1 (create)
