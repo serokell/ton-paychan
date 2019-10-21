@@ -27,6 +27,11 @@ library Iou  // IOUs
 // ( iouPayload -- wc addr amount iou uome )
 
 { <s
+  addr@
+} : getIouPayloadAddr
+// ( iouPayload -- wc addr )
+
+{ <s
   addr@+ -rot drop drop
   120 u@
 } : getIouPayloadAmount
