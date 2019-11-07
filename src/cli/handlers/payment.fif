@@ -40,7 +40,7 @@
   5 pick swap addPaymentsStateWeOwe
   // ( globalState cliStateNice amount ourSk wc addr ourShare paymentsState' )
 
-  dup -rot getPaymentsStateBalance >=
+  dup -rot getPaymentsStateBalance negate >=
     { fail"Payment impossible: our commitment is not large enough" } ifnot
   // ( globalState cliStateNice amount ourSk wc addr paymentsState' )
   4 roll swap
